@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>EM360™ | Portal de Proveedores</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+
+</head>
+
+<body>
+
+<section id="pantallaAcceso" class="pantalla-acceso">
+    <form id="formInicioSesion" class="tarjeta-acceso">
+        <h1>EM360™</h1>
+        <p>Inicie sesión con la cuenta invitada.</p>
+        <label for="correoAcceso">Correo electrónico</label>
+        <input id="correoAcceso" type="email" autocomplete="email" required>
+        <label for="claveAcceso">Contraseña</label>
+        <input id="claveAcceso" type="password" autocomplete="current-password" required>
+        <button type="submit">Iniciar sesión</button>
+        <p id="mensajeAcceso" class="mensaje-acceso" aria-live="polite"></p>
+    </form>
+
+    <form id="formClaveInvitacion" class="tarjeta-acceso" hidden>
+        <h1>Crear contraseña</h1>
+        <p>Complete la invitación creando una contraseña segura.</p>
+        <label for="nuevaClaveAcceso">Nueva contraseña</label>
+        <input id="nuevaClaveAcceso" type="password" minlength="8" autocomplete="new-password" required>
+        <button type="submit">Activar cuenta</button>
+        <p id="mensajeInvitacion" class="mensaje-acceso" aria-live="polite"></p>
+    </form>
+</section>
+
+<div id="appShell" class="container" hidden>
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <img src="assets/logo.png" alt="EM360">
+
+            <div>
+
+                <h2>EM360™</h2>
+                <p>Portal de Proveedores</p>
+
+            </div>
+
+        </div>
+
+        <nav class="menu">
+
+            <a href="#" id="menuInicio" class="activo">
+                🏠 Inicio
+            </a>
+
+            <a href="#" id="menuProyectos">
+                📁 Proyectos
+            </a>
+
+            <a href="#" id="menuPlanoInterior">
+                📐 Plano de Interior
+            </a>
+
+            <a href="#" id="menuCotizaciones">
+                📄 Cotizaciones
+            </a>
+
+            <a href="#" id="menuProveedores">
+                🏢 Proveedores
+            </a>
+
+            <a href="#" id="menuUsuarios">
+                👥 Usuarios
+            </a>
+
+            <a href="#" id="menuConfiguracion">
+                ⚙ Configuración
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <!-- CONTENIDO -->
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <h1>EM360™ | Portal de Proveedores</h1>
+
+            <div class="acciones-topbar">
+                <span id="usuarioSesion" class="usuario-sesion"></span>
+                <button id="btnNuevoProyecto">+ Nuevo Proyecto</button>
+                <button id="btnCerrarSesion" class="btn-cerrar-sesion" type="button">Cerrar sesión</button>
+            </div>
+
+        </header>
+
+        <section
+            class="content"
+            id="contenidoPrincipal">
+
+            <div class="card">
+
+                <h2>Bienvenido a EM360™</h2>
+
+                <p>
+
+                    Este portal permitirá que los proveedores de
+                    <strong>Ebanistería</strong> y
+                    <strong>Marmolería</strong>
+                    descarguen el plano oficial del proyecto y carguen sus
+                    cotizaciones.
+
+                </p>
+
+                <br>
+
+                <p>
+
+                    Todo el equipo podrá visualizar las cotizaciones,
+                    pero únicamente el administrador podrá aprobarlas.
+
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- Supabase -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="config.js"></script>
+<script src="supabase.js"></script>
+
+<!-- JS -->
+<script src="js/modal.js"></script>
+<script src="js/proyectos.js"></script>
+<script src="js/expediente.js"></script>
+<script src="js/transferencias.js"></script>
+<script src="js/proveedores.js"></script>
+<script src="js/documentos-proveedores.js"></script>
+<script src="js/levantamiento-medidas.js"></script>
+<script src="js/cotizaciones.js"></script>
+<script src="js/permisos.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/planos.js"></script>
+<script src="js/historial.js"></script>
+<script src="app.js"></script>
+<script src="js/auth.js"></script>
+
+</body>
+</html>

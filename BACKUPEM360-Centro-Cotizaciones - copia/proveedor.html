@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estudio Modular | Cotizaciones</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="pagina-proveedor">
+    <main class="portal-proveedor">
+        <section class="marca-proveedor" aria-label="Estudio Modular">
+            <img src="assets/estudio-modular-verde-sin-fondo-v2.png" alt="Estudio Modular - Diseña lo que sueñas">
+        </section>
+
+        <section id="accesoProveedor" class="tarjeta-proveedor">
+            <h1>Portal de proveedores</h1>
+            <p>Ingrese con la cuenta que recibió por invitación.</p>
+            <form id="formAccesoProveedor" class="form-proveedor">
+                <label for="correoProveedorAcceso">Correo electrónico</label>
+                <input id="correoProveedorAcceso" type="email" autocomplete="email" required>
+                <label for="claveProveedorAcceso">Contraseña</label>
+                <input id="claveProveedorAcceso" type="password" autocomplete="current-password" required>
+                <button type="submit">Ingresar</button>
+                <p id="mensajeProveedorAcceso" class="mensaje-proveedor" aria-live="polite"></p>
+            </form>
+        </section>
+
+        <section id="panelProveedor" class="tarjeta-proveedor" hidden>
+            <div class="cabecera-proveedor">
+                <div>
+                    <p class="etiqueta-proveedor">ESTUDIO MODULAR</p>
+                    <h1>Crear cotización</h1>
+                    <p id="nombreProveedorSesion">Complete los datos de su propuesta.</p>
+                </div>
+                <button id="btnCerrarSesionProveedor" class="boton-secundario" type="button">Cerrar sesión</button>
+            </div>
+
+            <form id="formNuevaCotizacionProveedor" class="form-proveedor">
+                <label for="proyectoProveedor">Proyecto</label>
+                <select id="proyectoProveedor" required>
+                    <option value="">Cargando proyectos...</option>
+                </select>
+
+                <label for="clasificacionProveedor">Clasificación del proveedor</label>
+                <select id="clasificacionProveedor" required>
+                    <option value="">Seleccione su especialidad</option>
+                    <option value="ebanisteria">Ebanista</option>
+                    <option value="marmoleros">Marmolero</option>
+                    <option value="sheetrockeros">Sheetrockero</option>
+                    <option value="plomeros">Plomero</option>
+                    <option value="electricistas">Electricista</option>
+                    <option value="piseros">Pisero</option>
+                    <option value="pintores">Pintor</option>
+                </select>
+
+                <label for="empresaProveedor">Nombre de la empresa o proveedor</label>
+                <input id="empresaProveedor" type="text" maxlength="120" required placeholder="Ejemplo: Carpintería González">
+
+                <label for="archivoCotizacionProveedor">Archivo de cotización</label>
+                <input id="archivoCotizacionProveedor" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,image/png,image/jpeg,image/webp" required>
+                <p class="ayuda-proveedor">PDF, Word, Excel o imagen. Máximo 15 MB.</p>
+
+                <label for="comentarioProveedor">Comentario</label>
+                <textarea id="comentarioProveedor" rows="4" maxlength="1500" placeholder="Indique el alcance, total estimado u observaciones."></textarea>
+
+                <button id="btnEnviarCotizacionProveedor" type="submit">Crear cotización</button>
+                <p id="mensajeEnvioProveedor" class="mensaje-proveedor" aria-live="polite"></p>
+            </form>
+
+            <section class="documentos-disponibles-proveedor">
+                <div class="cabecera-seguimiento-proveedor">
+                    <div>
+                        <h2>Documentos disponibles</h2>
+                        <p>Descargue los planos, especificaciones y documentos publicados para los proyectos.</p>
+                    </div>
+                    <button id="btnActualizarDocumentosProveedor" class="boton-secundario" type="button">Actualizar</button>
+                </div>
+                <div id="listaDocumentosProveedor" class="lista-seguimiento-proveedor" aria-live="polite">Cargando documentos...</div>
+            </section>
+
+            <section class="documentos-disponibles-proveedor">
+                <div class="cabecera-seguimiento-proveedor">
+                    <div>
+                        <h2>Hojas de levantamiento recibidas</h2>
+                        <p>Consulte las medidas enviadas para su especialidad.</p>
+                    </div>
+                    <button id="btnActualizarHojasProveedor" class="boton-secundario" type="button">Actualizar</button>
+                </div>
+                <div id="listaHojasProveedor" class="lista-seguimiento-proveedor" aria-live="polite">Cargando hojas...</div>
+            </section>
+
+            <section class="seguimiento-proveedor">
+                <div class="cabecera-seguimiento-proveedor">
+                    <div>
+                        <h2>Mis cotizaciones</h2>
+                        <p>Consulte si su propuesta fue aprobada o declinada.</p>
+                    </div>
+                    <button id="btnActualizarSeguimiento" class="boton-secundario" type="button">Actualizar</button>
+                </div>
+                <div id="listaSeguimientoProveedor" class="lista-seguimiento-proveedor" aria-live="polite">Cargando cotizaciones...</div>
+            </section>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="supabase.js"></script>
+    <script src="js/portal-proveedor.js"></script>
+</body>
+</html>

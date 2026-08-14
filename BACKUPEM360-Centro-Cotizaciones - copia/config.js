@@ -1,0 +1,3 @@
+const SUPABASE_URL = "https://nugulspburchkhgrmmfr.supabase.co";
+
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51Z3Vsc3BidXJjaGtoZ3JtbWZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwMjE3MTksImV4cCI6MjEwMDU5NzcxOX0.efVJmiERWT71bGR6wT6gQCrbmWAQm9w3pTwsmZiPW98";
