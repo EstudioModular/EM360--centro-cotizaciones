@@ -263,19 +263,16 @@ async function cargarHojasProveedor() {
         return;
     }
     lista.textContent = "Cargando hojas...";
-    const [{ data: hojas, error: errorHojas }, { data: proyectos, error: errorProyectos }] = await Promise.all([
-        supabaseClient.from("HojasLevantamiento").select("id, proyecto_id, contenido, creado_por, created_at").contains("servicios_destino", [especialidadPortalProveedor]).order("created_at", { ascending: false }),
-        supabaseClient.from("Proyectos").select("id, nombre")
-    ]);
-    if (errorHojas || errorProyectos) {
-        lista.textContent = `No se pudieron cargar las hojas: ${(errorHojas || errorProyectos).message}`;
+    const { data: hojas, error: errorHojas } = await supabaseClient.rpc("hojas_levantamiento_para_proveedor");
+    if (errorHojas) {
+        lista.textContent = `No se pudieron cargar las hojas: ${errorHojas.message}`;
         return;
     }
     if (!hojas.length) {
         lista.textContent = "No hay hojas de levantamiento enviadas para su especialidad.";
         return;
     }
-    const nombresProyecto = new Map(proyectos.map((proyecto) => [proyecto.id, proyecto.nombre]));
+    const nombresProyecto = new Map();
     hojasProveedorRecibidas.clear();
     lista.innerHTML = hojas.map((hoja) => {
         hojasProveedorRecibidas.set(String(hoja.id), hoja);
@@ -291,6 +288,16 @@ function abrirHojaProveedor(id) {
     const visor = document.createElement("div");
     visor.className = "visor-hoja-proveedor";
     visor.innerHTML = `<section class="panel-hoja-proveedor"><div class="cabecera-seguimiento-proveedor"><div><h2>Hoja de levantamiento de medidas</h2><p>${escaparTextoPortal(contenido.proyecto || "Proyecto")} · ${escaparTextoPortal(contenido.fecha || "")}</p></div><button type="button" class="boton-secundario" data-cerrar-hoja>Cerrar</button></div><p><strong>Cliente:</strong> ${escaparTextoPortal(contenido.cliente || "-")} · <strong>Ubicación:</strong> ${escaparTextoPortal(contenido.ubicacion || "-")}</p><table class="tabla-hoja-proveedor"><thead><tr><th>Elemento</th><th>Estándar</th><th>Medida real</th><th>Observaciones</th></tr></thead><tbody>${filas}</tbody></table><h3>Notas generales</h3><p>${escaparTextoPortal(contenido.notas || "Sin notas.")}</p></section>`;
+    // La versión del proveedor no muestra ningún dato personal del cliente.
+    const detallePrivado = visor.querySelector(".cabecera-seguimiento-proveedor + p");
+    if (detallePrivado) detallePrivado.remove();
+    if (contenido.croquis_imagen_ruta) {
+        const imagenCroquis = supabaseClient.storage.from("hojas-levantamiento").getPublicUrl(contenido.croquis_imagen_ruta).data.publicUrl;
+        const seccionCroquis = document.createElement("section");
+        seccionCroquis.className = "croquis-recibido";
+        seccionCroquis.innerHTML = `<h3>Plano / croquis adjunto</h3><a href="${imagenCroquis}" target="_blank" rel="noopener noreferrer"><img src="${imagenCroquis}" alt="Plano o croquis del espacio"></a><a href="${imagenCroquis}" target="_blank" rel="noopener noreferrer">Abrir imagen completa o descargar</a>`;
+        visor.querySelector(".tabla-hoja-proveedor")?.before(seccionCroquis);
+    }
     visor.addEventListener("click", (evento) => { if (evento.target === visor || evento.target.closest("[data-cerrar-hoja]")) visor.remove(); });
     document.body.append(visor);
 }

@@ -27,6 +27,16 @@ function escaparLevantamiento(valor) {
     return elemento.innerHTML;
 }
 
+function urlCroquisLevantamiento(ruta) {
+    return ruta ? supabaseClient.storage.from("hojas-levantamiento").getPublicUrl(ruta).data.publicUrl : "";
+}
+
+function actualizarVistaPreviaCroquis(archivo) {
+    const vista = document.getElementById("vistaPreviaCroquis");
+    if (!vista) return;
+    vista.innerHTML = archivo ? `<img src="${URL.createObjectURL(archivo)}" alt="Vista previa del plano o croquis">` : "";
+}
+
 async function cargarModuloLevantamiento(servicioInicial = "", hojaEditar = null) {
     const contenedor = document.getElementById("contenidoExpediente");
     if (!contenedor || !window.proyectoActual || !window.em360Permisos?.puedeAprobarCotizaciones()) return;
@@ -43,6 +53,7 @@ async function cargarModuloLevantamiento(servicioInicial = "", hojaEditar = null
 
     const valores = hojaEditar?.contenido || {};
     const medidasGuardadas = valores.medidas || [];
+    const imagenCroquisActual = urlCroquisLevantamiento(valores.croquis_imagen_ruta);
     const filas = MEDIDAS_LEVANTAMIENTO.map(([elemento, estandar], indice) => `
         <tr>
             <td>${indice + 1}</td><td>${elemento}</td><td>${estandar}</td>
@@ -64,7 +75,7 @@ async function cargarModuloLevantamiento(servicioInicial = "", hojaEditar = null
             <form id="formLevantamiento" data-hoja-id="${hojaEditar?.id || ""}">
                 <section class="datos-levantamiento">
                     <label>Proyecto<input name="proyecto" value="${escaparLevantamiento(proyecto.nombre)}" readonly></label>
-                    <label>Cliente<input name="cliente" value="${escaparLevantamiento(proyecto.cliente)}" readonly></label>
+                    <label>Cliente <small>(solo interno)</small><input name="cliente" value="${escaparLevantamiento(valores.cliente || proyecto.cliente)}"></label>
                     <label>Ubicación<input name="ubicacion" value="${escaparLevantamiento(proyecto.ubicacion)}" readonly></label>
                     <label>Técnico / responsable<input name="tecnico" value="${escaparLevantamiento(valores.tecnico || sesion?.nombre)}" required></label>
                     <label>Teléfono<input name="telefono" value="${escaparLevantamiento(valores.telefono)}" placeholder="Teléfono de contacto"></label>
@@ -73,7 +84,7 @@ async function cargarModuloLevantamiento(servicioInicial = "", hojaEditar = null
                 </section>
                 <div class="cuerpo-levantamiento">
                     <section class="tabla-levantamiento"><h3>Medidas estándar de referencia</h3><div class="tabla-scroll"><table><thead><tr><th>#</th><th>Elemento</th><th>Medida estándar (EM)</th><th>Medida real</th><th>Observaciones</th></tr></thead><tbody>${filas}</tbody></table></div></section>
-                    <section class="notas-levantamiento"><h3>Plano / croquis del espacio</h3><textarea name="croquis" placeholder="Describa el croquis, referencias y detalles del espacio.">${escaparLevantamiento(valores.croquis)}</textarea><h3>Notas / observaciones generales</h3><textarea name="notas" placeholder="Escriba las observaciones generales.">${escaparLevantamiento(valores.notas)}</textarea></section>
+                    <section class="notas-levantamiento"><h3>Plano / croquis del espacio</h3><textarea name="croquis" placeholder="Describa el croquis, referencias y detalles del espacio.">${escaparLevantamiento(valores.croquis)}</textarea><label class="carga-croquis">Adjuntar imagen del plano o croquis<input type="file" id="imagenCroquis" name="imagen_croquis" accept="image/png,image/jpeg,image/webp"><small>Formatos PNG, JPG o WEBP. Máximo 10 MB.</small></label><div id="vistaPreviaCroquis" class="vista-previa-croquis">${imagenCroquisActual ? `<img src="${imagenCroquisActual}" alt="Plano o croquis cargado">` : ""}</div><h3>Notas / observaciones generales</h3><textarea name="notas" placeholder="Escriba las observaciones generales.">${escaparLevantamiento(valores.notas)}</textarea></section>
                 </div>
                 <section class="firmas-levantamiento">
                     <label>Levantamiento realizado por<input name="firma_tecnico" value="${escaparLevantamiento(valores.firma_tecnico || sesion?.nombre)}"></label>
@@ -85,6 +96,9 @@ async function cargarModuloLevantamiento(servicioInicial = "", hojaEditar = null
         </section>
     `;
     document.getElementById("formLevantamiento").addEventListener("submit", enviarLevantamiento);
+    const ubicacionInterna = document.querySelector('#formLevantamiento input[name="ubicacion"]');
+    if (ubicacionInterna) ubicacionInterna.removeAttribute("readonly");
+    document.getElementById("imagenCroquis").addEventListener("change", (evento) => actualizarVistaPreviaCroquis(evento.target.files[0]));
     document.getElementById("btnVolverProveedores").addEventListener("click", () => window.cargarModuloProveedores?.(servicioInicial));
 }
 
@@ -99,30 +113,68 @@ async function enviarLevantamiento(evento) {
         mensaje.classList.add("es-error");
         return;
     }
+    const archivoCroquis = formulario.elements.imagen_croquis.files[0];
+    if (archivoCroquis && (!["image/png", "image/jpeg", "image/webp"].includes(archivoCroquis.type) || archivoCroquis.size > 10 * 1024 * 1024)) {
+        mensaje.textContent = "La imagen debe ser PNG, JPG o WEBP y no puede superar 10 MB.";
+        mensaje.classList.add("es-error");
+        return;
+    }
     const contenido = Object.fromEntries(new FormData(formulario).entries());
     contenido.medidas = MEDIDAS_LEVANTAMIENTO.map(([, ,], indice) => ({
         elemento: MEDIDAS_LEVANTAMIENTO[indice][0], estandar: MEDIDAS_LEVANTAMIENTO[indice][1],
         real: formulario.elements[`medida_${indice}`].value, observacion: formulario.elements[`observacion_${indice}`].value
     }));
     delete contenido.destino;
+    delete contenido.imagen_croquis;
     boton.disabled = true;
     mensaje.classList.remove("es-error");
     mensaje.textContent = "Enviando hoja...";
+    const idHoja = formulario.dataset.hojaId;
+    let rutaCroquisNueva = "";
+    let rutaCroquisAnterior = "";
+    if (idHoja) {
+        const { data: hojaActual } = await supabaseClient.from("HojasLevantamiento").select("contenido").eq("id", idHoja).single();
+        rutaCroquisAnterior = hojaActual?.contenido?.croquis_imagen_ruta || "";
+    }
+    if (archivoCroquis) {
+        const nombreSeguro = archivoCroquis.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        rutaCroquisNueva = `${window.proyectoActual}/${Date.now()}_${nombreSeguro}`;
+        const { error: errorImagen } = await supabaseClient.storage.from("hojas-levantamiento").upload(rutaCroquisNueva, archivoCroquis, { upsert: false });
+        if (errorImagen) {
+            boton.disabled = false;
+            mensaje.textContent = `No se pudo subir la imagen: ${errorImagen.message}`;
+            mensaje.classList.add("es-error");
+            return;
+        }
+        contenido.croquis_imagen_ruta = rutaCroquisNueva;
+    } else if (rutaCroquisAnterior) {
+        contenido.croquis_imagen_ruta = rutaCroquisAnterior;
+    }
     const datosHoja = {
         proyecto_id: window.proyectoActual,
         servicios_destino: destinos,
         contenido,
+        contenido_proveedor: {
+            fecha: contenido.fecha,
+            medidas: contenido.medidas,
+            croquis: contenido.croquis,
+            croquis_imagen_ruta: contenido.croquis_imagen_ruta || null,
+            notas: contenido.notas
+        },
         creado_por: window.em360Permisos.obtenerSesion()?.nombre || "Usuario autorizado"
     };
-    const idHoja = formulario.dataset.hojaId;
     const { error } = idHoja
         ? await supabaseClient.from("HojasLevantamiento").update(datosHoja).eq("id", idHoja)
         : await supabaseClient.from("HojasLevantamiento").insert([datosHoja]);
     boton.disabled = false;
     if (error) {
+        if (rutaCroquisNueva) await supabaseClient.storage.from("hojas-levantamiento").remove([rutaCroquisNueva]);
         mensaje.textContent = `No se pudo enviar: ${error.message}`;
         mensaje.classList.add("es-error");
         return;
+    }
+    if (rutaCroquisNueva && rutaCroquisAnterior && rutaCroquisNueva !== rutaCroquisAnterior) {
+        await supabaseClient.storage.from("hojas-levantamiento").remove([rutaCroquisAnterior]);
     }
     mensaje.textContent = idHoja ? "Hoja modificada y reenviada a los proveedores seleccionados." : "Hoja enviada a los proveedores seleccionados.";
 }
@@ -164,6 +216,8 @@ async function mostrarHojasLevantamientoEnviadas(servicioInicial = "") {
             if (!hoja || !confirm("¿Eliminar esta hoja de levantamiento? Los proveedores dejarán de verla.")) return;
             const { error: errorEliminar } = await supabaseClient.from("HojasLevantamiento").delete().eq("id", hoja.id);
             if (errorEliminar) return alert(errorEliminar.message);
+            const rutaCroquis = hoja.contenido?.croquis_imagen_ruta;
+            if (rutaCroquis) await supabaseClient.storage.from("hojas-levantamiento").remove([rutaCroquis]);
             await mostrarHojasLevantamientoEnviadas(servicioInicial);
         }
     });
