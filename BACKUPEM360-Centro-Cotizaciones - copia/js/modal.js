@@ -1,5 +1,10 @@
 function abrirModalNuevoProyecto() {
 
+    if (!window.em360Permisos?.puedeCrearProyectos()) {
+        alert("No tiene permiso para crear proyectos.");
+        return;
+    }
+
     // Evita abrir dos modales
     if (document.getElementById("modalProyecto")) return;
 

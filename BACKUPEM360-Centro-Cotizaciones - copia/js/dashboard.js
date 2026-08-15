@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const rol = sesion?.rol || "Consulta";
         const visiblesPorRol = {
             Administrador: ["menuInicio", "menuProyectos", "menuPlanoInterior", "menuCotizaciones", "menuProveedores", "menuUsuarios", "menuConfiguracion"],
-            Oficial: ["menuInicio", "menuCotizaciones", "menuProveedores"],
+            Oficial: ["menuInicio", "menuProyectos", "menuCotizaciones", "menuProveedores"],
         Consulta: ["menuInicio", "menuProyectos", "menuPlanoInterior", "menuCotizaciones"]
         };
         const visibles = visiblesPorRol[rol] || visiblesPorRol.Consulta;
@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const botonNuevoProyecto = document.getElementById("btnNuevoProyecto");
-        if (botonNuevoProyecto) botonNuevoProyecto.hidden = !window.em360Permisos.esAdministrador();
+        if (botonNuevoProyecto) botonNuevoProyecto.hidden = !window.em360Permisos.puedeCrearProyectos();
     }
 
     function mostrarInicio() {

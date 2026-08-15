@@ -53,11 +53,16 @@ function puedeAprobarCotizacionesEM360() {
     return esAdministradorEM360() || esOficialEM360();
 }
 
+function puedeCrearProyectosEM360() {
+    return esAdministradorEM360() || esOficialEM360();
+}
+
 window.em360Permisos = {
     roles: ROLES_EM360,
     cargarPerfil: cargarPerfilEM360,
     obtenerSesion: obtenerSesionEM360,
     esAdministrador: esAdministradorEM360,
     esOficial: esOficialEM360,
+    puedeCrearProyectos: puedeCrearProyectosEM360,
     puedeAprobarCotizaciones: puedeAprobarCotizacionesEM360
 };

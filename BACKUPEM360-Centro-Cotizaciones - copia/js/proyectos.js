@@ -12,6 +12,7 @@ async function cargarProyectos() {
         return;
     }
 
+    const esAdministrador = Boolean(window.em360Permisos?.esAdministrador());
     let html = `
         <div class="card">
 
@@ -69,6 +70,9 @@ async function cargarProyectos() {
     html += `</div>`;
 
     contenedor.innerHTML = html;
+    if (!esAdministrador) {
+        contenedor.querySelectorAll(".acciones-proyecto").forEach((acciones) => acciones.remove());
+    }
 
 }
 
