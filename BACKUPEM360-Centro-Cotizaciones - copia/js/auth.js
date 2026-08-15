@@ -1,4 +1,5 @@
 function enlaceDeActivacion() {
+    if (window.em360EnlaceDeClave) return true;
     const parametros = new URLSearchParams(window.location.hash.substring(1));
     return ["invite", "magiclink", "recovery"].includes(parametros.get("type"));
 }
@@ -85,7 +86,8 @@ document.getElementById("btnCerrarSesion").addEventListener("click", async () =>
     window.location.reload();
 });
 
-supabaseClient.auth.onAuthStateChange(() => {
+supabaseClient.auth.onAuthStateChange((evento) => {
+    if (evento === "PASSWORD_RECOVERY") window.em360EnlaceDeClave = true;
     actualizarVistaAcceso();
 });
 
