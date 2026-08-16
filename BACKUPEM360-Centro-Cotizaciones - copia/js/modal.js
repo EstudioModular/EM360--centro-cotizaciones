@@ -80,6 +80,20 @@ function abrirModalNuevoProyecto() {
                 "
             >
 
+            <fieldset style="margin:0 0 25px;padding:14px;border:1px solid #cbd8d6;border-radius:8px;">
+                <legend style="padding:0 6px;color:#083D3B;font-weight:700;">Proveedores requeridos</legend>
+                <p style="margin:0 0 10px;color:#52636a;font-size:13px;">Seleccione las especialidades que podrán cotizar este proyecto.</p>
+                <div id="serviciosProyecto" style="display:flex;flex-wrap:wrap;gap:9px;color:#083D3B;font-size:14px;">
+                    <label><input type="checkbox" value="ebanisteria"> Ebanistas</label>
+                    <label><input type="checkbox" value="marmoleros"> Marmoleros</label>
+                    <label><input type="checkbox" value="sheetrockeros"> Sheetrockeros</label>
+                    <label><input type="checkbox" value="plomeros"> Plomeros</label>
+                    <label><input type="checkbox" value="electricistas"> Electricistas</label>
+                    <label><input type="checkbox" value="piseros"> Piseros</label>
+                    <label><input type="checkbox" value="pintores"> Pintores</label>
+                </div>
+            </fieldset>
+
             <div style="
                 display:flex;
                 justify-content:flex-end;
@@ -132,9 +146,10 @@ function abrirModalNuevoProyecto() {
         const nombre = document.getElementById("nombreProyecto").value.trim();
         const cliente = document.getElementById("clienteProyecto").value.trim();
         const ubicacion = document.getElementById("ubicacionProyecto").value.trim();
+        const serviciosProveedores = Array.from(document.querySelectorAll("#serviciosProyecto input:checked")).map((input) => input.value);
 
-        if (!nombre || !cliente || !ubicacion) {
-            alert("Complete todos los campos.");
+        if (!nombre || !cliente || !ubicacion || !serviciosProveedores.length) {
+            alert("Complete todos los campos y seleccione al menos un tipo de proveedor.");
             return;
         }
 
@@ -145,7 +160,8 @@ function abrirModalNuevoProyecto() {
                     nombre: nombre,
                     cliente: cliente,
                     ubicacion: ubicacion,
-                    estado: "Pendiente"
+                    estado: "Pendiente",
+                    servicios_proveedores: serviciosProveedores
                 }
             ])
             .select();

@@ -35,10 +35,7 @@ function mostrarMensajeProveedor(elemento, mensaje, esError = false) {
 
 async function cargarProyectosPortalProveedor() {
     const selector = document.getElementById("proyectoProveedor");
-    const { data, error } = await supabaseClient
-        .from("Proyectos")
-        .select("id, nombre, cliente, estado")
-        .order("id", { ascending: false });
+    const { data, error } = await supabaseClient.rpc("proyectos_para_proveedor");
 
     if (error) {
         selector.innerHTML = '<option value="">No se pudieron cargar los proyectos</option>';
@@ -48,6 +45,11 @@ async function cargarProyectosPortalProveedor() {
     selector.innerHTML = [
         '<option value="">Seleccione el proyecto</option>',
         ...data.map((proyecto) => `<option value="${proyecto.id}">${proyecto.nombre} — ${proyecto.cliente} (${proyecto.estado})</option>`)
+    ].join("");
+    // El portal externo recibe solo el nombre y estado del proyecto asignado.
+    selector.innerHTML = [
+        '<option value="">Seleccione el proyecto</option>',
+        ...data.map((proyecto) => `<option value="${proyecto.id}">${proyecto.nombre} (${proyecto.estado})</option>`)
     ].join("");
 }
 
@@ -88,6 +90,12 @@ async function mostrarPortalProveedor() {
     acceso.hidden = true;
     panel.hidden = false;
     document.getElementById("nombreProveedorSesion").textContent = `¡Hola, ${nombreVisibleProveedor(perfil.nombre, usuario.email)}!`;
+
+    const selectorClasificacion = document.getElementById("clasificacionProveedor");
+    if (especialidadPortalProveedor && selectorClasificacion) {
+        selectorClasificacion.value = especialidadPortalProveedor;
+        selectorClasificacion.disabled = true;
+    }
 
     try {
         await Promise.all([cargarProyectosPortalProveedor(), cargarSeguimientoProveedor(), cargarDocumentosProveedor(), cargarHojasProveedor()]);
