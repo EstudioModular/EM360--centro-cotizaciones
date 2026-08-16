@@ -73,10 +73,21 @@
             <section class="documentos-disponibles-proveedor">
                 <div class="cabecera-seguimiento-proveedor">
                     <div>
+                        <h2>Planos disponibles</h2>
+                        <p>Consulte los planos publicados para su especialidad.</p>
+                    </div>
+                    <button id="btnActualizarPlanosProveedor" class="boton-secundario" type="button">Actualizar <span id="notificacionPlanosProveedor" class="burbuja-notificacion-verde" hidden></span></button>
+                </div>
+                <div id="listaPlanosProveedor" class="lista-seguimiento-proveedor" aria-live="polite">Cargando planos...</div>
+            </section>
+
+            <section class="documentos-disponibles-proveedor">
+                <div class="cabecera-seguimiento-proveedor">
+                    <div>
                         <h2>Documentos disponibles</h2>
                         <p>Descargue los planos, especificaciones y documentos publicados para los proyectos.</p>
                     </div>
-                    <button id="btnActualizarDocumentosProveedor" class="boton-secundario" type="button">Actualizar</button>
+                    <button id="btnActualizarDocumentosProveedor" class="boton-secundario" type="button">Actualizar <span id="notificacionDocumentosProveedor" class="burbuja-notificacion-verde" hidden></span></button>
                 </div>
                 <div id="listaDocumentosProveedor" class="lista-seguimiento-proveedor" aria-live="polite">Cargando documentos...</div>
             </section>
@@ -87,7 +98,7 @@
                         <h2>Hojas de levantamiento recibidas</h2>
                         <p>Consulte las medidas enviadas para su especialidad.</p>
                     </div>
-                    <button id="btnActualizarHojasProveedor" class="boton-secundario" type="button">Actualizar</button>
+                    <button id="btnActualizarHojasProveedor" class="boton-secundario" type="button">Actualizar <span id="notificacionHojasProveedor" class="burbuja-notificacion-verde" hidden></span></button>
                 </div>
                 <div id="listaHojasProveedor" class="lista-seguimiento-proveedor" aria-live="polite">Cargando hojas...</div>
             </section>
