@@ -83,10 +83,23 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        const pendientesPorProyecto = new Map();
+        if (modulo === "cotizaciones" && window.em360Permisos?.puedeAprobarCotizaciones()) {
+            const { data: pendientes, error: errorPendientes } = await supabaseClient
+                .from("CotizacionesProveedores")
+                .select("proyecto_id")
+                .eq("estado", "Pendiente");
+            if (!errorPendientes) {
+                pendientes.forEach((cotizacion) => {
+                    pendientesPorProyecto.set(cotizacion.proyecto_id, (pendientesPorProyecto.get(cotizacion.proyecto_id) || 0) + 1);
+                });
+            }
+        }
+
         const proyectos = data.length
             ? data.map((proyecto) => `
                 <article class="selector-proyecto-item">
-                    <h3>${escaparDashboard(proyecto.nombre)}</h3>
+                    <div class="titulo-proyecto-notificacion"><h3>${escaparDashboard(proyecto.nombre)}</h3>${pendientesPorProyecto.get(proyecto.id) ? `<span class="burbuja-proyecto" title="Cotizaciones pendientes">${pendientesPorProyecto.get(proyecto.id)}</span>` : ""}</div>
                     <p><strong>Cliente:</strong> ${escaparDashboard(proyecto.cliente)}</p>
                     <p><strong>Estado:</strong> ${escaparDashboard(proyecto.estado)}</p>
                     <button type="button" data-proyecto-id="${proyecto.id}" data-modulo="${modulo}" data-servicio="${servicioPreseleccionado}">Abrir</button>
