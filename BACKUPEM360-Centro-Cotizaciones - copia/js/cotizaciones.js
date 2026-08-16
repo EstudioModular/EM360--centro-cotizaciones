@@ -193,6 +193,7 @@ async function resolverCotizacion(id, estado, respuesta, recargar) {
     }
 
     await recargar();
+    await window.em360ActualizarNotificacionCotizaciones?.();
 }
 
 function abrirVistaPreviaCotizacion(url, titulo) {

@@ -32,6 +32,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const botonNuevoProyecto = document.getElementById("btnNuevoProyecto");
         if (botonNuevoProyecto) botonNuevoProyecto.hidden = !window.em360Permisos.puedeCrearProyectos();
+        actualizarNotificacionCotizaciones();
+    }
+
+    async function actualizarNotificacionCotizaciones() {
+        const enlace = document.getElementById("menuCotizaciones");
+        if (!enlace) return;
+        let burbuja = document.getElementById("notificacionCotizaciones");
+        if (!burbuja) {
+            burbuja = document.createElement("span");
+            burbuja.id = "notificacionCotizaciones";
+            burbuja.className = "burbuja-notificacion";
+            burbuja.setAttribute("aria-label", "Cotizaciones pendientes");
+            enlace.append(burbuja);
+        }
+        if (!window.em360Permisos?.puedeAprobarCotizaciones()) {
+            burbuja.hidden = true;
+            return;
+        }
+        const { count, error } = await supabaseClient
+            .from("CotizacionesProveedores")
+            .select("id", { count: "exact", head: true })
+            .eq("estado", "Pendiente");
+        if (error || !count) {
+            burbuja.hidden = true;
+            return;
+        }
+        burbuja.textContent = count > 99 ? "99+" : String(count);
+        burbuja.hidden = false;
     }
 
     function mostrarInicio() {
@@ -277,6 +305,7 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         menuCotizaciones: () => {
             activarMenu("menuCotizaciones");
+            actualizarNotificacionCotizaciones();
             if (window.em360Permisos.esOficial()) {
                 window.cargarAprobacionesOficial?.();
             } else {
@@ -298,4 +327,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     window.em360ActualizarPermisos = aplicarPermisosPorRol;
+    window.em360ActualizarNotificacionCotizaciones = actualizarNotificacionCotizaciones;
+    window.setInterval(actualizarNotificacionCotizaciones, 30000);
 });
