@@ -12,6 +12,17 @@ async function cargarProyectos() {
         return;
     }
 
+    const { data: cotizacionesPendientes, error: errorCotizaciones } = await supabaseClient
+        .from("CotizacionesProveedores")
+        .select("proyecto_id")
+        .eq("estado", "Pendiente");
+    const pendientesPorProyecto = new Map();
+    if (!errorCotizaciones) {
+        cotizacionesPendientes.forEach((cotizacion) => {
+            pendientesPorProyecto.set(cotizacion.proyecto_id, (pendientesPorProyecto.get(cotizacion.proyecto_id) || 0) + 1);
+        });
+    }
+
     const esAdministrador = Boolean(window.em360Permisos?.esAdministrador());
     let html = `
         <div class="card">
@@ -30,12 +41,13 @@ async function cargarProyectos() {
     } else {
 
         data.forEach(proyecto => {
+            const pendientes = pendientesPorProyecto.get(proyecto.id) || 0;
 
             html += `
 
                 <div class="proyecto-card">
 
-                    <h3>${proyecto.nombre}</h3>
+                    <div class="titulo-proyecto-notificacion"><h3>${proyecto.nombre}</h3>${pendientes ? `<span class="burbuja-proyecto" title="Cotizaciones pendientes">${pendientes}</span>` : ""}</div>
 
                     <p><strong>Cliente:</strong> ${proyecto.cliente}</p>
 
