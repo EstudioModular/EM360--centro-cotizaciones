@@ -56,6 +56,14 @@ async function abrirProyecto(id){
                     💰 Cotizaciones
                 </button>
 
+                <button onclick="mostrarCotizacionInterna()">
+                    Cotización EM
+                </button>
+
+                <button onclick="mostrarPlanTrabajo()">
+                    Plan de trabajo
+                </button>
+
                 <button onclick="mostrarHistorial()">
                     📋 Historial
                 </button>
