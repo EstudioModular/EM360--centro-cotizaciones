@@ -33,6 +33,13 @@ function mostrarMensajeProveedor(elemento, mensaje, esError = false) {
     elemento.classList.toggle("es-error", esError);
 }
 
+function actualizarNotificacionVerde(id, cantidad) {
+    const burbuja = document.getElementById(id);
+    if (!burbuja) return;
+    burbuja.hidden = !cantidad;
+    burbuja.textContent = cantidad > 99 ? "99+" : String(cantidad || "");
+}
+
 async function cargarProyectosPortalProveedor() {
     const selector = document.getElementById("proyectoProveedor");
     const { data, error } = await supabaseClient.rpc("proyectos_para_proveedor");
@@ -98,7 +105,7 @@ async function mostrarPortalProveedor() {
     }
 
     try {
-        await Promise.all([cargarProyectosPortalProveedor(), cargarSeguimientoProveedor(), cargarDocumentosProveedor(), cargarHojasProveedor()]);
+        await Promise.all([cargarProyectosPortalProveedor(), cargarSeguimientoProveedor(), cargarPlanosProveedor(), cargarDocumentosProveedor(), cargarHojasProveedor()]);
     } catch (errorProyectos) {
         mostrarMensajeProveedor(document.getElementById("mensajeEnvioProveedor"), errorProyectos.message, true);
     }
@@ -234,24 +241,43 @@ async function cargarSeguimientoProveedor() {
     }).join("");
 }
 
+async function cargarPlanosProveedor() {
+    const lista = document.getElementById("listaPlanosProveedor");
+    if (!lista || !usuarioPortalProveedor) return;
+    lista.textContent = "Cargando planos...";
+    const { data: planos, error } = await supabaseClient.rpc("planos_para_proveedor");
+    if (error) {
+        lista.textContent = `No se pudieron cargar los planos: ${error.message}`;
+        return;
+    }
+    actualizarNotificacionVerde("notificacionPlanosProveedor", planos.length);
+    if (!planos.length) {
+        lista.textContent = "No hay planos publicados para su especialidad.";
+        return;
+    }
+    lista.innerHTML = planos.map((plano) => {
+        const url = supabaseClient.storage.from("planos").getPublicUrl(plano.ruta_archivo).data.publicUrl;
+        return `<article class="documento-proveedor-item"><div><strong>${escaparTextoPortal(plano.nombre_archivo || "Plano")}</strong><span>Publicado ${fechaPortalProveedor(plano.created_at)}</span></div><a href="${url}" target="_blank" rel="noopener noreferrer">Ver o descargar</a></article>`;
+    }).join("");
+}
+
 async function cargarDocumentosProveedor() {
     const lista = document.getElementById("listaDocumentosProveedor");
     if (!lista || !usuarioPortalProveedor) return;
 
     lista.textContent = "Cargando documentos...";
-    const [{ data: documentos, error: errorDocumentos }, { data: proyectos, error: errorProyectos }] = await Promise.all([
-        supabaseClient.from("DocumentosProveedores").select("id, proyecto_id, titulo, servicio, comentario, ruta_archivo, created_at").order("created_at", { ascending: false }),
-        supabaseClient.from("Proyectos").select("id, nombre")
-    ]);
-    if (errorDocumentos || errorProyectos) {
-        lista.textContent = `No se pudieron cargar los documentos: ${(errorDocumentos || errorProyectos).message}`;
+    const { data: documentos, error: errorDocumentos } = await supabaseClient.rpc("documentos_para_proveedor");
+    if (errorDocumentos) {
+        lista.textContent = `No se pudieron cargar los documentos: ${errorDocumentos.message}`;
         return;
     }
     if (!documentos.length) {
+        actualizarNotificacionVerde("notificacionDocumentosProveedor", 0);
         lista.textContent = "No hay documentos publicados todavía.";
         return;
     }
-    const nombresProyecto = new Map(proyectos.map((proyecto) => [proyecto.id, proyecto.nombre]));
+    actualizarNotificacionVerde("notificacionDocumentosProveedor", documentos.length);
+    const nombresProyecto = new Map();
     lista.innerHTML = documentos.map((documento) => {
         const url = supabaseClient.storage.from("documentos-proveedores").getPublicUrl(documento.ruta_archivo).data.publicUrl;
         const categoria = documento.servicio ? ` · ${escaparTextoPortal(documento.servicio)}` : "";
@@ -261,6 +287,7 @@ async function cargarDocumentosProveedor() {
 }
 
 document.getElementById("btnActualizarSeguimiento").addEventListener("click", cargarSeguimientoProveedor);
+document.getElementById("btnActualizarPlanosProveedor").addEventListener("click", cargarPlanosProveedor);
 document.getElementById("btnActualizarDocumentosProveedor").addEventListener("click", cargarDocumentosProveedor);
 
 async function cargarHojasProveedor() {
@@ -277,9 +304,11 @@ async function cargarHojasProveedor() {
         return;
     }
     if (!hojas.length) {
+        actualizarNotificacionVerde("notificacionHojasProveedor", 0);
         lista.textContent = "No hay hojas de levantamiento enviadas para su especialidad.";
         return;
     }
+    actualizarNotificacionVerde("notificacionHojasProveedor", hojas.length);
     const nombresProyecto = new Map();
     hojasProveedorRecibidas.clear();
     lista.innerHTML = hojas.map((hoja) => {

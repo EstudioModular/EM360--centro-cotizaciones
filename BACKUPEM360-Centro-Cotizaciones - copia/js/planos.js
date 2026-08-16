@@ -23,6 +23,17 @@ async function cargarModuloPlanos() {
                 accept=".pdf,.dwg,.jpg,.jpeg,.png"
             >
 
+            <fieldset class="destinos-plano">
+                <legend>Compartir este plano con</legend>
+                <label><input type="checkbox" name="destinoPlano" value="ebanisteria"> Ebanistas</label>
+                <label><input type="checkbox" name="destinoPlano" value="marmoleros"> Marmoleros</label>
+                <label><input type="checkbox" name="destinoPlano" value="sheetrockeros"> Sheetrockeros</label>
+                <label><input type="checkbox" name="destinoPlano" value="plomeros"> Plomeros</label>
+                <label><input type="checkbox" name="destinoPlano" value="electricistas"> Electricistas</label>
+                <label><input type="checkbox" name="destinoPlano" value="piseros"> Piseros</label>
+                <label><input type="checkbox" name="destinoPlano" value="pintores"> Pintores</label>
+            </fieldset>
+
             <br><br>
 
             <button id="btnSubirPlano">
@@ -50,10 +61,11 @@ async function subirPlano(){
 
     const input = document.getElementById("archivoPlano");
     const boton = document.getElementById("btnSubirPlano");
+    const destinos = Array.from(document.querySelectorAll('input[name="destinoPlano"]:checked')).map((inputDestino) => inputDestino.value);
 
-    if(input.files.length===0){
+    if(input.files.length===0 || !destinos.length){
 
-        alert("Seleccione un archivo.");
+        alert("Seleccione un archivo y al menos un tipo de proveedor.");
 
         return;
 
@@ -79,10 +91,24 @@ async function subirPlano(){
 
         if(error) throw error;
 
+        const { error: errorRegistro } = await supabaseClient
+            .from("PlanosProveedores")
+            .insert([{
+                proyecto_id: window.proyectoActual,
+                servicios_destino: destinos,
+                ruta_archivo: nombreArchivo,
+                nombre_archivo: archivo.name
+            }]);
+        if (errorRegistro) {
+            await supabaseClient.storage.from("planos").remove([nombreArchivo]);
+            throw errorRegistro;
+        }
+
         await cargarListaPlanos();
 
         input.value = "";
-        alert("Archivo subido correctamente.");
+        document.querySelectorAll('input[name="destinoPlano"]').forEach((casilla) => { casilla.checked = false; });
+        alert("Plano publicado para los proveedores seleccionados.");
 
     }catch(error){
 
