@@ -2,7 +2,7 @@
 
 const TIPO_COTIZACION_INTERNA = "CotizacionInterna";
 const TIPO_PLAN_TRABAJO = "PlanTrabajo";
-const LOGO_DOCUMENTO_PROYECTO = "assets/estudio-modular-sin-fondo.png";
+const LOGO_DOCUMENTO_PROYECTO = "assets/estudio-modular-logo-transparente.png";
 
 function escaparDocumentoProyecto(valor) {
     const elemento = document.createElement("div");
