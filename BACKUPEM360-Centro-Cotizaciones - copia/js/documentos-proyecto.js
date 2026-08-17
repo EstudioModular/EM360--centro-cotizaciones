@@ -2,7 +2,7 @@
 
 const TIPO_COTIZACION_INTERNA = "CotizacionInterna";
 const TIPO_PLAN_TRABAJO = "PlanTrabajo";
-const LOGO_DOCUMENTO_PROYECTO = "assets/estudio-modular-logo-transparente.png";
+const LOGO_DOCUMENTO_PROYECTO = "assets/estudio-modular-logo-verde-transparente.png";
 
 function escaparDocumentoProyecto(valor) {
     const elemento = document.createElement("div");
@@ -256,6 +256,9 @@ function imprimirDocumento(titulo, cuerpo) {
     if (!ventana) return alert("El navegador bloqueó la ventana de exportación. Permita las ventanas emergentes e intente de nuevo.");
     const logo = new URL(LOGO_DOCUMENTO_PROYECTO, window.location.href).href;
     ventana.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escaparDocumentoProyecto(titulo)}</title><style>body{font-family:Arial,sans-serif;color:#123;max-width:900px;margin:42px auto;padding:0 26px}.marca{display:flex;align-items:center;height:82px;padding:13px 22px;background:#003d38;border-radius:10px}.marca img{max-width:310px;max-height:56px;object-fit:contain}.titulo{border-bottom:4px solid #0e5a56;padding-bottom:14px;margin:20px 0 25px;font-size:32px;color:#083d3b}.meta{line-height:1.75;margin-bottom:24px;padding:18px;background:#f4f8f7;border-left:5px solid #0e5a56}table{width:100%;border-collapse:collapse;margin:22px 0}th{background:#083d3b;color:#fff}th,td{border:1px solid #cad8d6;padding:10px;text-align:left}h4{color:#083d3b;margin-top:28px}.total{text-align:right;color:#083d3b}p{line-height:1.6}@media print{body{margin:0;max-width:none}}</style></head><body><div class="marca"><img src="${logo}" alt="Estudio Modular"></div><h1 class="titulo">${escaparDocumentoProyecto(titulo)}</h1>${cuerpo}<p style="margin-top:45px;border-top:1px solid #ccd;padding-top:14px;color:#667">Documento generado desde EM360™ · ${new Date().toLocaleString("es-DO")}</p><script>window.onload=()=>setTimeout(()=>window.print(),300);</script></body></html>`);
+    const estiloLogoSinFondo = ventana.document.createElement("style");
+    estiloLogoSinFondo.textContent = ".marca{height:66px!important;padding:0!important;background:transparent!important;border-radius:0!important}.marca img{max-width:250px!important;max-height:66px!important}";
+    ventana.document.head.append(estiloLogoSinFondo);
     ventana.document.close();
 }
 
