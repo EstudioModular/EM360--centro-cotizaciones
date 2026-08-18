@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const visiblesPorRol = {
             Administrador: ["menuInicio", "menuProyectos", "menuPlanoInterior", "menuCotizaciones", "menuProveedores", "menuUsuarios", "menuConfiguracion"],
             Oficial: ["menuInicio", "menuProyectos", "menuCotizaciones", "menuProveedores"],
-        Consulta: ["menuInicio", "menuProyectos", "menuPlanoInterior", "menuCotizaciones"]
+            Consulta: ["menuInicio", "menuProyectos", "menuPlanoInterior", "menuCotizaciones"]
         };
         const visibles = visiblesPorRol[rol] || visiblesPorRol.Consulta;
 
@@ -32,6 +32,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const botonNuevoProyecto = document.getElementById("btnNuevoProyecto");
         if (botonNuevoProyecto) botonNuevoProyecto.hidden = !window.em360Permisos.puedeCrearProyectos();
+
+        const botonCrearOrdenTrabajo = document.getElementById("btnCrearOrdenTrabajo");
+        if (botonCrearOrdenTrabajo) {
+            botonCrearOrdenTrabajo.hidden = !window.em360Permisos.puedeCrearProyectos();
+            botonCrearOrdenTrabajo.addEventListener("click", () => {
+                if (typeof window.abrirModalNuevaOrdenTrabajo === "function") {
+                    window.abrirModalNuevaOrdenTrabajo();
+                }
+            });
+        }
+
         actualizarNotificacionCotizaciones();
     }
 

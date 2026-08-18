@@ -1,0 +1,391 @@
+(function () {
+    const SERVICIOS_ORDEN = {
+        ebanisteria: "EbanisterÃ­a",
+        marmoleros: "MarmolerÃ­a",
+        sheetrockeros: "Sheetrock",
+        plomeros: "PlomerÃ­a",
+        electricistas: "Electricidad",
+        piseros: "Pisos",
+        pintores: "Pintura"
+    };
+
+    function formatearMoneda(valor) {
+        const numero = Number(valor || 0);
+        return new Intl.NumberFormat("es-DO", {
+            style: "currency",
+            currency: "DOP",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(numero);
+    }
+
+    function formatearFecha(fecha) {
+        if (!fecha) return "";
+        const fechaValor = new Date(fecha);
+        if (Number.isNaN(fechaValor.getTime())) return fecha;
+        const dia = String(fechaValor.getDate()).padStart(2, "0");
+        const mes = String(fechaValor.getMonth() + 1).padStart(2, "0");
+        const anio = fechaValor.getFullYear();
+        return `${dia}/${mes}/${anio}`;
+    }
+
+    function permitirSoloNumeros(valor) {
+        return Number(String(valor).replace(/[^\d.]/g, "") || 0);
+    }
+
+    function construirNumeroOT() {
+        const anioActual = new Date().getFullYear();
+        const fecha = new Date();
+        const fechaCodigo = `${String(fecha.getDate()).padStart(2, "0")}${String(fecha.getMonth() + 1).padStart(2, "0")}`;
+        const horaCodigo = `${String(fecha.getHours()).padStart(2, "0")}${String(fecha.getMinutes()).padStart(2, "0")}`;
+        return `OT-${anioActual}-${fechaCodigo}-${horaCodigo}`;
+    }
+
+    async function cargarProyectosOrdenTrabajo() {
+        const { data, error } = await supabaseClient
+            .from("Proyectos")
+            .select("id, nombre, cliente, ubicacion, estado, servicios_proveedores")
+            .order("id", { ascending: false });
+
+        if (error) {
+            console.error("Error cargando proyectos para OT:", error);
+            return [];
+        }
+
+        return data || [];
+    }
+
+    function obtenerServiciosDisponiblesProyecto(proyecto) {
+        const servicios = Array.isArray(proyecto?.servicios_proveedores) ? proyecto.servicios_proveedores : [];
+        return servicios.length ? servicios : ["ebanisteria"];
+    }
+
+    function crearPdfOrdenTrabajo(datos) {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            throw new Error("No se pudo cargar jsPDF.");
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: "mm", format: "a4" });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        doc.setFillColor(8, 61, 59);
+        doc.rect(0, 0, pageWidth, 28, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont(undefined, "bold");
+        doc.text("EM360â„¢", 14, 18);
+        doc.setFontSize(10);
+        doc.text("ORDEN DE TRABAJO", 118, 15);
+        doc.text(`N.Âº ${datos.numero}`, 150, 21);
+
+        doc.setDrawColor(214, 181, 106);
+        doc.setFillColor(250, 250, 250);
+        doc.roundedRect(12, 34, pageWidth - 24, 14, 2, 2, "F");
+        doc.setTextColor(8, 61, 59);
+        doc.setFontSize(11);
+        doc.setFont(undefined, "bold");
+        doc.text("PROYECTO / CLIENTE", 18, 42);
+
+        doc.setDrawColor(200, 210, 212);
+        doc.setTextColor(25, 25, 25);
+        doc.setFont(undefined, "normal");
+        doc.text(String(datos.proyecto || ""), 80, 42);
+
+        const bloqueCampos = [
+            ["Servicio asignado", datos.servicio],
+            ["Proveedor", datos.proveedor],
+            ["Valor acordado", formatearMoneda(datos.valorAcordado)],
+            ["Anticipo", formatearMoneda(datos.anticipo)],
+            ["Restante", formatearMoneda(datos.restante)],
+            ["Fecha de inicio", datos.fechaInicio],
+            ["Fecha lÃ­mite", datos.fechaFin],
+            ["Material", datos.material]
+        ];
+
+        let y = 58;
+        bloqueCampos.forEach(([titulo, valor], indice) => {
+            const x = indice % 2 === 0 ? 14 : 108;
+            const yActual = y + Math.floor(indice / 2) * 28;
+
+            doc.setDrawColor(225, 232, 234);
+            doc.roundedRect(x, yActual, 82, 20, 2, 2, "S");
+            doc.setFillColor(247, 249, 249);
+            doc.roundedRect(x, yActual, 82, 20, 2, 2, "F");
+            doc.setFont(undefined, "bold");
+            doc.setTextColor(8, 61, 59);
+            doc.setFontSize(8.5);
+            doc.text(`${titulo}:`, x + 4, yActual + 7);
+            doc.setFont(undefined, "normal");
+            doc.setTextColor(35, 35, 35);
+            doc.setFontSize(9.3);
+            const textoValor = String(valor || "");
+            const lineasValor = doc.splitTextToSize(textoValor, 64);
+            doc.text(lineasValor, x + 4, yActual + 13);
+        });
+
+        y = 146;
+        doc.setDrawColor(225, 232, 234);
+        doc.roundedRect(14, y, pageWidth - 28, 28, 3, 3, "S");
+        doc.setFillColor(250, 252, 252);
+        doc.roundedRect(14, y, pageWidth - 28, 28, 3, 3, "F");
+        doc.setFont(undefined, "bold");
+        doc.setTextColor(8, 61, 59);
+        doc.setFontSize(9.5);
+        doc.text("ALCANCE:", 20, y + 8);
+        doc.setFont(undefined, "normal");
+        doc.setTextColor(30, 30, 30);
+        const alcanceLineas = doc.splitTextToSize(String(datos.alcance || ""), 165);
+        doc.text(alcanceLineas, 20, y + 16);
+
+        y += 38;
+        doc.setDrawColor(225, 232, 234);
+        doc.roundedRect(14, y, pageWidth - 28, 26, 3, 3, "S");
+        doc.setFillColor(250, 252, 252);
+        doc.roundedRect(14, y, pageWidth - 28, 26, 3, 3, "F");
+        doc.setFont(undefined, "bold");
+        doc.setTextColor(8, 61, 59);
+        doc.setFontSize(9.5);
+        doc.text("OBSERVACIONES:", 20, y + 8);
+        doc.setFont(undefined, "normal");
+        doc.setTextColor(30, 30, 30);
+        const observacionesLineas = doc.splitTextToSize(String(datos.observaciones || ""), 165);
+        doc.text(observacionesLineas, 20, y + 16);
+
+        y += 40;
+        doc.setFillColor(245, 240, 220);
+        doc.roundedRect(14, y, pageWidth - 28, 20, 3, 3, "F");
+        doc.setDrawColor(214, 181, 106);
+        doc.roundedRect(14, y, pageWidth - 28, 20, 3, 3, "S");
+        doc.setFont(undefined, "bold");
+        doc.setTextColor(8, 61, 59);
+        doc.setFontSize(9.5);
+        doc.text("CLÃUSULA:", 20, y + 8);
+        doc.setFont(undefined, "normal");
+        doc.setTextColor(35, 35, 35);
+        doc.text("SerÃ¡ descontado el 1% del valor total por cada dÃ­a de atraso.", 55, y + 8);
+
+        const firmaY = pageHeight - 26;
+        doc.setDrawColor(100, 100, 100);
+        doc.line(18, firmaY, 78, firmaY);
+        doc.line(120, firmaY, 184, firmaY);
+        doc.setFont(undefined, "normal");
+        doc.setTextColor(40, 40, 40);
+        doc.setFontSize(9);
+        doc.text("Firma Estudio Modular", 20, firmaY + 6);
+        doc.text("Firma Proveedor", 128, firmaY + 6);
+
+        return doc;
+    }
+
+    function construirCuerpoCorreo(datos) {
+        return [
+            `Estimado/a ${datos.proveedor},`,
+            "",
+            `Adjuntamos la orden de trabajo EM360â„¢ N.Âº ${datos.numero} para el proyecto ${datos.proyecto}.`,
+            "",
+            `Servicio asignado: ${datos.servicio}`,
+            `Valor acordado: ${formatearMoneda(datos.valorAcordado)}`,
+            `Anticipo: ${formatearMoneda(datos.anticipo)}`,
+            `Restante: ${formatearMoneda(datos.restante)}`,
+            `Fecha de inicio: ${datos.fechaInicio}`,
+            `Fecha lÃ­mite: ${datos.fechaFin}`,
+            `Material: ${datos.material}`,
+            `Alcance: ${datos.alcance}`,
+            `Observaciones: ${datos.observaciones}`,
+            "",
+            "ClÃ¡usula: SerÃ¡ descontado el 1% del valor total por cada dÃ­a de atraso.",
+            "",
+            "Atentamente,",
+            "Estudio Modular EM360â„¢"
+        ].join("\n");
+    }
+
+    async function abrirModalNuevaOrdenTrabajo() {
+        if (document.getElementById("modalOrdenTrabajo")) return;
+
+        const proyectos = await cargarProyectosOrdenTrabajo();
+        const modal = document.createElement("div");
+        modal.id = "modalOrdenTrabajo";
+        modal.style.position = "fixed";
+        modal.style.inset = "0";
+        modal.style.background = "rgba(0,0,0,.58)";
+        modal.style.display = "flex";
+        modal.style.justifyContent = "center";
+        modal.style.alignItems = "center";
+        modal.style.zIndex = "99999";
+        modal.style.padding = "20px";
+
+        const proyectoOptions = proyectos.length
+            ? proyectos.map((proyecto) => `<option value="${proyecto.id}">${proyecto.nombre}</option>`).join("")
+            : '<option value="">No hay proyectos creados</option>';
+
+        modal.innerHTML = `
+            <div style="width:min(760px,100%);background:#fff;border-radius:16px;padding:28px;box-shadow:0 20px 50px rgba(0,0,0,.28);max-height:90vh;overflow:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px;">
+                    <div>
+                        <p style="margin:0;color:#0E5A56;font-size:12px;font-weight:700;letter-spacing:1.2px;">ESTUDIO MODULAR Â· EM360â„¢</p>
+                        <h2 style="margin:6px 0 0;color:#083D3B;">Crear Orden de Trabajo</h2>
+                    </div>
+                    <button type="button" id="cerrarOrdenTrabajo" style="background:#64748B;padding:10px 14px;">Cerrar</button>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Proyecto</label>
+                        <select id="proyectoOrdenTrabajo" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;">
+                            ${proyectoOptions}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Servicio asignado</label>
+                        <select id="servicioOrdenTrabajo" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;">
+                            <option value="">Seleccione servicio</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Proveedor</label>
+                        <input id="proveedorOrdenTrabajo" type="text" placeholder="Ej. Jorge Luis NÃºÃ±ez Bautista" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
+                    </div>
+
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Valor acordado</label>
+                        <input id="valorAcordadoOrdenTrabajo" type="number" min="0" step="0.01" placeholder="85000" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
+                    </div>
+
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Anticipo</label>
+                        <input id="anticipoOrdenTrabajo" type="number" min="0" step="0.01" placeholder="40000" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
+                    </div>
+
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Restante</label>
+                        <input id="restanteOrdenTrabajo" type="number" min="0" step="0.01" placeholder="45000" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
+                    </div>
+
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Fecha de inicio</label>
+                        <input id="fechaInicioOrdenTrabajo" type="date" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
+                    </div>
+
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Fecha lÃ­mite</label>
+                        <input id="fechaFinOrdenTrabajo" type="date" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
+                    </div>
+                </div>
+
+                <div style="margin-top:14px;display:grid;gap:14px;">
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Material</label>
+                        <input id="materialOrdenTrabajo" type="text" placeholder="MDF hidrÃ³fugo 3/4" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
+                    </div>
+
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Alcance</label>
+                        <textarea id="alcanceOrdenTrabajo" rows="3" placeholder="SegÃºn planos suministrados por Estudio Modular." style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;resize:vertical;" required></textarea>
+                    </div>
+
+                    <div>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Observaciones</label>
+                        <textarea id="observacionesOrdenTrabajo" rows="3" placeholder="Cualquier modificaciÃ³n requiere autorizaciÃ³n de Estudio Modular." style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;resize:vertical;" required></textarea>
+                    </div>
+                </div>
+
+                <div style="margin-top:18px;display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;">
+                    <button type="button" id="generarOrdenTrabajo" style="background:#0E5A56;">Generar PDF y enviar</button>
+                </div>
+            </div>
+        `;
+
+        const proyectoSelect = modal.querySelector("#proyectoOrdenTrabajo");
+        const servicioSelect = modal.querySelector("#servicioOrdenTrabajo");
+        const valorInput = modal.querySelector("#valorAcordadoOrdenTrabajo");
+        const anticipoInput = modal.querySelector("#anticipoOrdenTrabajo");
+        const restanteInput = modal.querySelector("#restanteOrdenTrabajo");
+
+        const rellenarServicios = () => {
+            const proyectoSeleccionado = proyectos.find((proyecto) => String(proyecto.id) === String(proyectoSelect.value));
+            const servicios = obtenerServiciosDisponiblesProyecto(proyectoSeleccionado);
+            servicioSelect.innerHTML = servicios.length
+                ? servicios.map((servicio) => `<option value="${servicio}">${SERVICIOS_ORDEN[servicio] || servicio}</option>`).join("")
+                : '<option value="">Seleccione servicio</option>';
+        };
+
+        proyectoSelect.addEventListener("change", rellenarServicios);
+        if (proyectoSelect.value) rellenarServicios();
+
+        valorInput.addEventListener("input", () => {
+            const valor = permitirSoloNumeros(valorInput.value);
+            if (!Number.isFinite(valor)) return;
+            if (!restanteInput.value) {
+                restanteInput.value = valor - Number(anticipoInput.value || 0);
+            }
+        });
+
+        anticipoInput.addEventListener("input", () => {
+            const valor = permitirSoloNumeros(valorInput.value);
+            const anticipo = permitirSoloNumeros(anticipoInput.value);
+            if (valor > 0 || anticipo > 0) {
+                restanteInput.value = Math.max(0, valor - anticipo);
+            }
+        });
+
+        modal.querySelector("#cerrarOrdenTrabajo").addEventListener("click", () => modal.remove());
+        modal.querySelector("#generarOrdenTrabajo").addEventListener("click", () => {
+            const proyectoSeleccionado = proyectos.find((proyecto) => String(proyecto.id) === String(proyectoSelect.value));
+            const proveedor = modal.querySelector("#proveedorOrdenTrabajo").value.trim();
+            const servicio = servicioSelect.value;
+            const valorAcordado = Number(modal.querySelector("#valorAcordadoOrdenTrabajo").value || 0);
+            const anticipo = Number(modal.querySelector("#anticipoOrdenTrabajo").value || 0);
+            const restante = Number(modal.querySelector("#restanteOrdenTrabajo").value || 0);
+            const fechaInicio = modal.querySelector("#fechaInicioOrdenTrabajo").value;
+            const fechaFin = modal.querySelector("#fechaFinOrdenTrabajo").value;
+            const material = modal.querySelector("#materialOrdenTrabajo").value.trim();
+            const alcance = modal.querySelector("#alcanceOrdenTrabajo").value.trim();
+            const observaciones = modal.querySelector("#observacionesOrdenTrabajo").value.trim();
+
+            if (!proyectoSeleccionado || !proveedor || !servicio || !valorAcordado || !fechaInicio || !fechaFin || !material || !alcance || !observaciones) {
+                alert("Complete todos los campos obligatorios para crear la orden de trabajo.");
+                return;
+            }
+
+            const numeroOT = construirNumeroOT();
+            const datos = {
+                numero: numeroOT,
+                proyecto: proyectoSeleccionado.nombre,
+                servicio: SERVICIOS_ORDEN[servicio] || servicio,
+                proveedor,
+                valorAcordado,
+                anticipo,
+                restante,
+                fechaInicio: formatearFecha(fechaInicio),
+                fechaFin: formatearFecha(fechaFin),
+                material,
+                alcance,
+                observaciones,
+                correoDestino: "ventasestudiomodular@gmail.com"
+            };
+
+            try {
+                const doc = crearPdfOrdenTrabajo(datos);
+                doc.save(`${numeroOT}.pdf`);
+
+                const correo = `mailto:${datos.correoDestino}?subject=${encodeURIComponent(`Orden de trabajo ${numeroOT} - ${datos.proyecto}`)}&body=${encodeURIComponent(construirCuerpoCorreo(datos))}`;
+                window.open(correo, "_blank");
+
+                alert(`Orden de trabajo ${numeroOT} generada correctamente y lista para enviar al correo ${datos.correoDestino}.`);
+                modal.remove();
+            } catch (error) {
+                console.error(error);
+                alert(`No se pudo generar la orden de trabajo: ${error.message}`);
+            }
+        });
+
+        document.body.appendChild(modal);
+    }
+
+    window.abrirModalNuevaOrdenTrabajo = abrirModalNuevaOrdenTrabajo;
+})();
