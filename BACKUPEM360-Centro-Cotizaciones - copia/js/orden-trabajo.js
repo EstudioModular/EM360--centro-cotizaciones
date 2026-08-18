@@ -116,22 +116,12 @@
         doc.setTextColor(8, 61, 59);
         doc.setFontSize(11);
         doc.setFont(undefined, "bold");
-        const etiquetaProyecto = "PROYECTO / CLIENTE";
-        const anchoEtiquetaProyecto = doc.getTextWidth(etiquetaProyecto);
+        doc.text("PROYECTO / CLIENTE", 20, 53);
 
         doc.setTextColor(25, 25, 25);
         doc.setFont(undefined, "normal");
         doc.setFontSize(11);
-        const nombreProyecto = String(datos.proyecto || "");
-        const anchoNombreProyecto = doc.getTextWidth(nombreProyecto);
-        const separacionProyecto = 10;
-        const inicioProyecto = (pageWidth - anchoEtiquetaProyecto - separacionProyecto - anchoNombreProyecto) / 2;
-        doc.setFont(undefined, "bold");
-        doc.setTextColor(8, 61, 59);
-        doc.text(etiquetaProyecto, inicioProyecto, 53);
-        doc.setFont(undefined, "normal");
-        doc.setTextColor(25, 25, 25);
-        doc.text(nombreProyecto, inicioProyecto + anchoEtiquetaProyecto + separacionProyecto, 53);
+        doc.text(String(datos.proyecto || ""), 72, 53);
 
         const bloqueCampos = [
             ["Servicio asignado", datos.servicio],
@@ -146,7 +136,7 @@
 
         let y = 68;
         bloqueCampos.forEach(([titulo, valor], indice) => {
-            const x = indice % 2 === 0 ? 14 : 108;
+            const x = indice % 2 === 0 ? 17 : 111;
             const yActual = y + Math.floor(indice / 2) * 28;
 
             doc.setDrawColor(225, 232, 234);
