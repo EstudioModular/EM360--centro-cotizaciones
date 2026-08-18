@@ -1,4 +1,6 @@
 (function () {
+    const LOGO_ORDEN_TRABAJO = "assets/estudio-modular-logo-transparente.png";
+
     const SERVICIOS_ORDEN = {
         ebanisteria: "Ebanistería",
         marmoleros: "Marmolería",
@@ -60,7 +62,20 @@
         return servicios.length ? servicios : ["ebanisteria"];
     }
 
-    function crearPdfOrdenTrabajo(datos) {
+    async function cargarLogoOrdenTrabajo() {
+        const respuesta = await fetch(LOGO_ORDEN_TRABAJO);
+        if (!respuesta.ok) throw new Error("No se pudo cargar el logo de Estudio Modular.");
+
+        const imagen = await respuesta.blob();
+        return new Promise((resolver, rechazar) => {
+            const lector = new FileReader();
+            lector.onload = () => resolver(lector.result);
+            lector.onerror = () => rechazar(new Error("No se pudo preparar el logo para el PDF."));
+            lector.readAsDataURL(imagen);
+        });
+    }
+
+    async function crearPdfOrdenTrabajo(datos) {
         if (!window.jspdf || !window.jspdf.jsPDF) {
             throw new Error("No se pudo cargar jsPDF.");
         }
@@ -73,9 +88,15 @@
         doc.setFillColor(8, 61, 59);
         doc.rect(0, 0, pageWidth, 28, "F");
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(18);
-        doc.setFont(undefined, "bold");
-        doc.text("EM360™", 14, 18);
+        try {
+            const logo = await cargarLogoOrdenTrabajo();
+            doc.addImage(logo, "PNG", 12, 2, 50, 26);
+        } catch (error) {
+            console.warn(error);
+            doc.setFontSize(18);
+            doc.setFont(undefined, "bold");
+            doc.text("EM360™", 14, 18);
+        }
         doc.setFontSize(10);
         doc.text("ORDEN DE TRABAJO", 118, 15);
         doc.text(`N.º ${datos.numero}`, 150, 21);
@@ -334,7 +355,7 @@
         });
 
         modal.querySelector("#cerrarOrdenTrabajo").addEventListener("click", () => modal.remove());
-        modal.querySelector("#generarOrdenTrabajo").addEventListener("click", () => {
+        modal.querySelector("#generarOrdenTrabajo").addEventListener("click", async () => {
             const proyectoSeleccionado = proyectos.find((proyecto) => String(proyecto.id) === String(proyectoSelect.value));
             const proveedor = modal.querySelector("#proveedorOrdenTrabajo").value.trim();
             const servicio = servicioSelect.value;
@@ -370,7 +391,7 @@
             };
 
             try {
-                const doc = crearPdfOrdenTrabajo(datos);
+                const doc = await crearPdfOrdenTrabajo(datos);
                 doc.save(`${numeroOT}.pdf`);
 
                 const correo = `mailto:${datos.correoDestino}?subject=${encodeURIComponent(`Orden de trabajo ${numeroOT} - ${datos.proyecto}`)}&body=${encodeURIComponent(construirCuerpoCorreo(datos))}`;
