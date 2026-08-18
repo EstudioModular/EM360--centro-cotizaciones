@@ -1,9 +1,9 @@
 (function () {
     const SERVICIOS_ORDEN = {
-        ebanisteria: "EbanisterÃ­a",
-        marmoleros: "MarmolerÃ­a",
+        ebanisteria: "Ebanistería",
+        marmoleros: "Marmolería",
         sheetrockeros: "Sheetrock",
-        plomeros: "PlomerÃ­a",
+        plomeros: "Plomería",
         electricistas: "Electricidad",
         piseros: "Pisos",
         pintores: "Pintura"
@@ -75,10 +75,10 @@
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(18);
         doc.setFont(undefined, "bold");
-        doc.text("EM360â„¢", 14, 18);
+        doc.text("EM360™", 14, 18);
         doc.setFontSize(10);
         doc.text("ORDEN DE TRABAJO", 118, 15);
-        doc.text(`N.Âº ${datos.numero}`, 150, 21);
+        doc.text(`N.º ${datos.numero}`, 150, 21);
 
         doc.setDrawColor(214, 181, 106);
         doc.setFillColor(250, 250, 250);
@@ -100,7 +100,7 @@
             ["Anticipo", formatearMoneda(datos.anticipo)],
             ["Restante", formatearMoneda(datos.restante)],
             ["Fecha de inicio", datos.fechaInicio],
-            ["Fecha lÃ­mite", datos.fechaFin],
+            ["Fecha límite", datos.fechaFin],
             ["Material", datos.material]
         ];
 
@@ -161,10 +161,10 @@
         doc.setFont(undefined, "bold");
         doc.setTextColor(8, 61, 59);
         doc.setFontSize(9.5);
-        doc.text("CLÃUSULA:", 20, y + 8);
+        doc.text("CLÁUSULA:", 20, y + 8);
         doc.setFont(undefined, "normal");
         doc.setTextColor(35, 35, 35);
-        doc.text("SerÃ¡ descontado el 1% del valor total por cada dÃ­a de atraso.", 55, y + 8);
+        doc.text("Será descontado el 1% del valor total por cada día de atraso.", 55, y + 8);
 
         const firmaY = pageHeight - 26;
         doc.setDrawColor(100, 100, 100);
@@ -183,22 +183,22 @@
         return [
             `Estimado/a ${datos.proveedor},`,
             "",
-            `Adjuntamos la orden de trabajo EM360â„¢ N.Âº ${datos.numero} para el proyecto ${datos.proyecto}.`,
+            `Adjuntamos la orden de trabajo EM360™ N.º ${datos.numero} para el proyecto ${datos.proyecto}.`,
             "",
             `Servicio asignado: ${datos.servicio}`,
             `Valor acordado: ${formatearMoneda(datos.valorAcordado)}`,
             `Anticipo: ${formatearMoneda(datos.anticipo)}`,
             `Restante: ${formatearMoneda(datos.restante)}`,
             `Fecha de inicio: ${datos.fechaInicio}`,
-            `Fecha lÃ­mite: ${datos.fechaFin}`,
+            `Fecha límite: ${datos.fechaFin}`,
             `Material: ${datos.material}`,
             `Alcance: ${datos.alcance}`,
             `Observaciones: ${datos.observaciones}`,
             "",
-            "ClÃ¡usula: SerÃ¡ descontado el 1% del valor total por cada dÃ­a de atraso.",
+            "Cláusula: Será descontado el 1% del valor total por cada día de atraso.",
             "",
             "Atentamente,",
-            "Estudio Modular EM360â„¢"
+            "Estudio Modular EM360™"
         ].join("\n");
     }
 
@@ -225,7 +225,7 @@
             <div style="width:min(760px,100%);background:#fff;border-radius:16px;padding:28px;box-shadow:0 20px 50px rgba(0,0,0,.28);max-height:90vh;overflow:auto;">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px;">
                     <div>
-                        <p style="margin:0;color:#0E5A56;font-size:12px;font-weight:700;letter-spacing:1.2px;">ESTUDIO MODULAR Â· EM360â„¢</p>
+                        <p style="margin:0;color:#0E5A56;font-size:12px;font-weight:700;letter-spacing:1.2px;">ESTUDIO MODULAR · EM360™</p>
                         <h2 style="margin:6px 0 0;color:#083D3B;">Crear Orden de Trabajo</h2>
                     </div>
                     <button type="button" id="cerrarOrdenTrabajo" style="background:#64748B;padding:10px 14px;">Cerrar</button>
@@ -248,7 +248,7 @@
 
                     <div>
                         <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Proveedor</label>
-                        <input id="proveedorOrdenTrabajo" type="text" placeholder="Ej. Jorge Luis NÃºÃ±ez Bautista" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
+                        <input id="proveedorOrdenTrabajo" type="text" placeholder="Ej. Jorge Luis Núñez Bautista" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
                     </div>
 
                     <div>
@@ -272,7 +272,7 @@
                     </div>
 
                     <div>
-                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Fecha lÃ­mite</label>
+                        <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Fecha límite</label>
                         <input id="fechaFinOrdenTrabajo" type="date" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
                     </div>
                 </div>
@@ -280,17 +280,17 @@
                 <div style="margin-top:14px;display:grid;gap:14px;">
                     <div>
                         <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Material</label>
-                        <input id="materialOrdenTrabajo" type="text" placeholder="MDF hidrÃ³fugo 3/4" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
+                        <input id="materialOrdenTrabajo" type="text" placeholder="MDF hidrófugo 3/4" style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;" required>
                     </div>
 
                     <div>
                         <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Alcance</label>
-                        <textarea id="alcanceOrdenTrabajo" rows="3" placeholder="SegÃºn planos suministrados por Estudio Modular." style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;resize:vertical;" required></textarea>
+                        <textarea id="alcanceOrdenTrabajo" rows="3" placeholder="Según planos suministrados por Estudio Modular." style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;resize:vertical;" required></textarea>
                     </div>
 
                     <div>
                         <label style="display:block;color:#083D3B;font-weight:700;margin-bottom:6px;">Observaciones</label>
-                        <textarea id="observacionesOrdenTrabajo" rows="3" placeholder="Cualquier modificaciÃ³n requiere autorizaciÃ³n de Estudio Modular." style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;resize:vertical;" required></textarea>
+                        <textarea id="observacionesOrdenTrabajo" rows="3" placeholder="Cualquier modificación requiere autorización de Estudio Modular." style="width:100%;padding:12px;border:1px solid #C9D4D3;border-radius:8px;resize:vertical;" required></textarea>
                     </div>
                 </div>
 
