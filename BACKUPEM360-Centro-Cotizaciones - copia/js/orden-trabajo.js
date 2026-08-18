@@ -1,5 +1,5 @@
 (function () {
-    const LOGO_ORDEN_TRABAJO = "assets/estudio-modular-logo-transparente.png";
+    const LOGO_ORDEN_TRABAJO = "assets/estudio-modular-verde-sin-fondo-v2.png";
 
     const SERVICIOS_ORDEN = {
         ebanisteria: "Ebanistería",
@@ -85,34 +85,43 @@
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
 
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 0, pageWidth, pageHeight, "F");
         doc.setFillColor(8, 61, 59);
-        doc.rect(0, 0, pageWidth, 28, "F");
-        doc.setTextColor(255, 255, 255);
+        doc.rect(0, 0, pageWidth, 5, "F");
+        doc.setDrawColor(214, 181, 106);
+        doc.setLineWidth(0.7);
+        doc.line(14, 35, pageWidth - 14, 35);
+        doc.setTextColor(8, 61, 59);
         try {
             const logo = await cargarLogoOrdenTrabajo();
-            doc.addImage(logo, "PNG", 12, 2, 50, 26);
+            doc.addImage(logo, "PNG", 10, 0, 72, 38);
         } catch (error) {
             console.warn(error);
             doc.setFontSize(18);
             doc.setFont(undefined, "bold");
             doc.text("EM360™", 14, 18);
         }
+        doc.setFontSize(16);
+        doc.setFont(undefined, "bold");
+        doc.text("ORDEN DE TRABAJO", pageWidth - 14, 17, { align: "right" });
         doc.setFontSize(10);
-        doc.text("ORDEN DE TRABAJO", 118, 15);
-        doc.text(`N.º ${datos.numero}`, 150, 21);
+        doc.setFont(undefined, "normal");
+        doc.text(`N.º ${datos.numero}`, pageWidth - 14, 24, { align: "right" });
 
-        doc.setDrawColor(214, 181, 106);
-        doc.setFillColor(250, 250, 250);
-        doc.roundedRect(12, 34, pageWidth - 24, 14, 2, 2, "F");
+        doc.setDrawColor(225, 232, 234);
+        doc.setFillColor(248, 250, 250);
+        doc.roundedRect(14, 43, pageWidth - 28, 17, 3, 3, "F");
+        doc.roundedRect(14, 43, pageWidth - 28, 17, 3, 3, "S");
         doc.setTextColor(8, 61, 59);
         doc.setFontSize(11);
         doc.setFont(undefined, "bold");
-        doc.text("PROYECTO / CLIENTE", 18, 42);
+        doc.text("PROYECTO / CLIENTE", 20, 53);
 
-        doc.setDrawColor(200, 210, 212);
         doc.setTextColor(25, 25, 25);
         doc.setFont(undefined, "normal");
-        doc.text(String(datos.proyecto || ""), 80, 42);
+        doc.setFontSize(11);
+        doc.text(String(datos.proyecto || ""), 72, 53);
 
         const bloqueCampos = [
             ["Servicio asignado", datos.servicio],
@@ -125,7 +134,7 @@
             ["Material", datos.material]
         ];
 
-        let y = 58;
+        let y = 68;
         bloqueCampos.forEach(([titulo, valor], indice) => {
             const x = indice % 2 === 0 ? 14 : 108;
             const yActual = y + Math.floor(indice / 2) * 28;
@@ -146,7 +155,7 @@
             doc.text(lineasValor, x + 4, yActual + 13);
         });
 
-        y = 146;
+        y = 178;
         doc.setDrawColor(225, 232, 234);
         doc.roundedRect(14, y, pageWidth - 28, 28, 3, 3, "S");
         doc.setFillColor(250, 252, 252);
@@ -187,7 +196,7 @@
         doc.setTextColor(35, 35, 35);
         doc.text("Será descontado el 1% del valor total por cada día de atraso.", 55, y + 8);
 
-        const firmaY = pageHeight - 26;
+        const firmaY = pageHeight - 15;
         doc.setDrawColor(100, 100, 100);
         doc.line(18, firmaY, 78, firmaY);
         doc.line(120, firmaY, 184, firmaY);
