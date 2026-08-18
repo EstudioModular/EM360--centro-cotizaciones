@@ -1401,3 +1401,46 @@ textarea:focus{
     .card h2{font-size:26px;}
     .card p{font-size:16px;}
 }
+
+/* Mantener la navegacion con el verde institucional */
+.sidebar{
+    background:#083D3B;
+    color:#fff;
+    border-right:0;
+    box-shadow:10px 0 30px rgba(6,55,52,.12);
+}
+
+.logo{
+    border-color:rgba(255,255,255,.12);
+    background:rgba(255,255,255,.035);
+}
+
+.logo img{
+    background:#fff;
+    box-shadow:none;
+}
+
+.logo h2,
+.logo p{
+    color:#fff;
+}
+
+.logo p{
+    opacity:.72;
+}
+
+.menu a{
+    color:rgba(255,255,255,.92);
+}
+
+.menu a:hover{
+    background:#0E5A56;
+    color:#fff;
+}
+
+.menu .activo{
+    border-left-color:#D6B56A;
+    background:#0E5A56;
+    color:#fff;
+    box-shadow:inset 3px 0 0 #D6B56A;
+}
