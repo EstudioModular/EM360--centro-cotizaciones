@@ -1,5 +1,6 @@
 (function () {
     const LOGO_ORDEN_TRABAJO = "assets/estudio-modular-verde-sin-fondo-v2.png";
+    let abriendoModalOrdenTrabajo = false;
 
     const SERVICIOS_ORDEN = {
         ebanisteria: "Ebanistería",
@@ -233,9 +234,22 @@
     }
 
     async function abrirModalNuevaOrdenTrabajo() {
-        if (document.getElementById("modalOrdenTrabajo")) return;
+        if (abriendoModalOrdenTrabajo || document.querySelector("#modalOrdenTrabajo")) return;
+        abriendoModalOrdenTrabajo = true;
 
-        const proyectos = await cargarProyectosOrdenTrabajo();
+        let proyectos;
+        try {
+            proyectos = await cargarProyectosOrdenTrabajo();
+        } catch (error) {
+            abriendoModalOrdenTrabajo = false;
+            throw error;
+        }
+
+        if (document.querySelector("#modalOrdenTrabajo")) {
+            abriendoModalOrdenTrabajo = false;
+            return;
+        }
+
         const modal = document.createElement("div");
         modal.id = "modalOrdenTrabajo";
         modal.style.position = "fixed";
@@ -335,6 +349,13 @@
         const valorInput = modal.querySelector("#valorAcordadoOrdenTrabajo");
         const anticipoInput = modal.querySelector("#anticipoOrdenTrabajo");
         const restanteInput = modal.querySelector("#restanteOrdenTrabajo");
+        const cerrarModal = () => {
+            document.querySelectorAll("#modalOrdenTrabajo").forEach((elemento) => elemento.remove());
+            document.removeEventListener("keydown", cerrarConEscape);
+        };
+        const cerrarConEscape = (evento) => {
+            if (evento.key === "Escape") cerrarModal();
+        };
 
         const rellenarServicios = () => {
             const proyectoSeleccionado = proyectos.find((proyecto) => String(proyecto.id) === String(proyectoSelect.value));
@@ -363,7 +384,11 @@
             }
         });
 
-        modal.querySelector("#cerrarOrdenTrabajo").addEventListener("click", () => modal.remove());
+        modal.querySelector("#cerrarOrdenTrabajo").addEventListener("click", cerrarModal);
+        modal.addEventListener("click", (evento) => {
+            if (evento.target === modal) cerrarModal();
+        });
+        document.addEventListener("keydown", cerrarConEscape);
         modal.querySelector("#generarOrdenTrabajo").addEventListener("click", async () => {
             const proyectoSeleccionado = proyectos.find((proyecto) => String(proyecto.id) === String(proyectoSelect.value));
             const proveedor = modal.querySelector("#proveedorOrdenTrabajo").value.trim();
@@ -407,7 +432,7 @@
                 window.open(correo, "_blank");
 
                 alert(`Orden de trabajo ${numeroOT} generada correctamente y lista para enviar al correo ${datos.correoDestino}.`);
-                modal.remove();
+                cerrarModal();
             } catch (error) {
                 console.error(error);
                 alert(`No se pudo generar la orden de trabajo: ${error.message}`);
@@ -415,6 +440,7 @@
         });
 
         document.body.appendChild(modal);
+        abriendoModalOrdenTrabajo = false;
     }
 
     window.abrirModalNuevaOrdenTrabajo = abrirModalNuevaOrdenTrabajo;

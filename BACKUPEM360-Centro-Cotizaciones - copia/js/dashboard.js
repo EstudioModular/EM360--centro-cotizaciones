@@ -36,11 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const botonCrearOrdenTrabajo = document.getElementById("btnCrearOrdenTrabajo");
         if (botonCrearOrdenTrabajo) {
             botonCrearOrdenTrabajo.hidden = !window.em360Permisos.puedeCrearProyectos();
-            botonCrearOrdenTrabajo.addEventListener("click", () => {
+            botonCrearOrdenTrabajo.onclick = () => {
                 if (typeof window.abrirModalNuevaOrdenTrabajo === "function") {
                     window.abrirModalNuevaOrdenTrabajo();
                 }
-            });
+            };
         }
 
         actualizarNotificacionCotizaciones();
