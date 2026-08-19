@@ -3,6 +3,17 @@
 const TIPO_COTIZACION_INTERNA = "CotizacionInterna";
 const TIPO_PLAN_TRABAJO = "PlanTrabajo";
 const LOGO_DOCUMENTO_PROYECTO = "assets/estudio-modular-logo-verde-transparente.png";
+const PLANTILLAS_PLAN_TRABAJO = {
+    ebanisteria: { nombre: "Ebanistería", descripcion: "Mobiliario, puertas y trabajos en madera.", actividades: ["Confirmar medidas en obra", "Preparar diseño y despiece", "Comprar y recibir materiales", "Fabricar piezas", "Aplicar terminación", "Instalar y ajustar", "Entregar trabajos"] },
+    marmoleros: { nombre: "Mármol y topes", descripcion: "Topes, revestimientos y acabados en piedra.", actividades: ["Tomar medidas y plantillas", "Confirmar material y veta", "Cortar piezas", "Preparar cantos y perforaciones", "Transportar piezas", "Instalar y nivelar", "Sellar y entregar"] },
+    sheetrockeros: { nombre: "Sheetrock", descripcion: "Muros, plafones y acabados en sheetrock.", actividades: ["Replantear áreas", "Instalar estructura", "Coordinar instalaciones internas", "Colocar paneles", "Encintar juntas", "Lijar y corregir", "Entregar listo para pintura"] },
+    plomeros: { nombre: "Plomería", descripcion: "Instalaciones sanitarias, agua y desagües.", actividades: ["Replantear puntos sanitarios", "Instalar tuberías", "Realizar prueba de presión", "Instalar desagües", "Colocar aparatos y grifería", "Probar funcionamiento", "Entregar instalación"] },
+    electricistas: { nombre: "Electricidad", descripcion: "Canalizaciones, cableado y equipos eléctricos.", actividades: ["Replantear puntos eléctricos", "Instalar canalizaciones", "Tender cableado", "Instalar tablero y protecciones", "Colocar luminarias y tomas", "Realizar pruebas", "Entregar instalación"] },
+    piseros: { nombre: "Pisos", descripcion: "Revestimientos, pisos y terminaciones.", actividades: ["Revisar y preparar superficie", "Trazar modulación", "Cortar piezas", "Instalar revestimiento", "Aplicar juntas o fragua", "Limpiar y corregir", "Entregar área"] },
+    pintores: { nombre: "Pintura", descripcion: "Preparación y pintura de superficies.", actividades: ["Proteger áreas", "Preparar superficies", "Aplicar sellador", "Aplicar primera mano", "Aplicar manos finales", "Retocar detalles", "Limpiar y entregar"] }
+};
+let tipoPlanTrabajoActual = TIPO_PLAN_TRABAJO;
+let plantillaPlanTrabajoActual = null;
 
 function escaparDocumentoProyecto(valor) {
     const elemento = document.createElement("div");
@@ -93,7 +104,38 @@ function filaCronogramaPlan(item = {}) {
 }
 
 async function mostrarCotizacionInterna() { await cargarDocumentoProyecto(TIPO_COTIZACION_INTERNA); }
-async function mostrarPlanTrabajo() { await cargarDocumentoProyecto(TIPO_PLAN_TRABAJO); }
+async function mostrarPlanTrabajo() {
+    const contenedor = document.getElementById("contenidoExpediente");
+    if (!contenedor || !window.proyectoActual) return;
+    contenedor.innerHTML = "<p>Cargando plantillas...</p>";
+    try {
+        const proyecto = await obtenerProyectoDocumento();
+        renderizarSelectorPlanTrabajo(contenedor, proyecto);
+    } catch (error) {
+        contenedor.innerHTML = `<p>No se pudieron cargar las plantillas: ${escaparDocumentoProyecto(error.message)}</p>`;
+    }
+}
+
+function renderizarSelectorPlanTrabajo(contenedor, proyecto) {
+    contenedor.innerHTML = `<section class="documento-proyecto"><div class="cabecera-documento-proyecto"><div><p class="etiqueta-documento">ESTUDIO MODULAR · EM360™</p><h3>Planes de trabajo por especialidad</h3><p>Seleccione la plantilla que desea preparar para ${escaparDocumentoProyecto(proyecto.nombre)}. Cada especialidad se guarda por separado.</p></div></div><div class="grid-especialidades-proveedores"><button type="button" class="especialidad-proveedor" data-plan-especialidad=""><h3>Plan general</h3><p>Plan global del proyecto.</p><span>Abrir plantilla</span></button>${Object.entries(PLANTILLAS_PLAN_TRABAJO).map(([codigo, plantilla]) => `<button type="button" class="especialidad-proveedor" data-plan-especialidad="${codigo}"><h3>${escaparDocumentoProyecto(plantilla.nombre)}</h3><p>${escaparDocumentoProyecto(plantilla.descripcion)}</p><span>Abrir plantilla</span></button>`).join("")}</div></section>`;
+    contenedor.querySelectorAll("[data-plan-especialidad]").forEach((boton) => boton.addEventListener("click", () => cargarPlanTrabajoPorEspecialidad(boton.dataset.planEspecialidad)));
+}
+
+async function cargarPlanTrabajoPorEspecialidad(codigo = "") {
+    const contenedor = document.getElementById("contenidoExpediente");
+    if (!contenedor || !window.proyectoActual) return;
+    const plantilla = codigo ? PLANTILLAS_PLAN_TRABAJO[codigo] : null;
+    const tipo = plantilla ? `${TIPO_PLAN_TRABAJO}_${codigo}` : TIPO_PLAN_TRABAJO;
+    contenedor.innerHTML = "<p>Cargando plan de trabajo...</p>";
+    try {
+        const [proyecto, documento] = await Promise.all([obtenerProyectoDocumento(), obtenerDocumentoProyecto(tipo)]);
+        tipoPlanTrabajoActual = tipo;
+        plantillaPlanTrabajoActual = plantilla ? { codigo, ...plantilla } : null;
+        renderizarPlanTrabajo(contenedor, proyecto, documento, plantillaPlanTrabajoActual);
+    } catch (error) {
+        contenedor.innerHTML = `<p>No se pudo cargar el plan: ${escaparDocumentoProyecto(error.message)}</p>`;
+    }
+}
 
 async function cargarDocumentoProyecto(tipo) {
     const contenedor = document.getElementById("contenidoExpediente");
@@ -168,26 +210,29 @@ async function guardarCotizacionInterna() {
     await guardarDocumentoProyecto(TIPO_COTIZACION_INTERNA, contenido.numero || "Cotización", contenido);
 }
 
-function renderizarPlanTrabajo(contenedor, proyecto, documento) {
+function renderizarPlanTrabajo(contenedor, proyecto, documento, plantilla = null) {
     const contenido = documento?.contenido || {};
-    const actividades = contenido.actividades?.length ? contenido.actividades : [{}];
+    const actividades = contenido.actividades?.length ? contenido.actividades : (plantilla ? plantilla.actividades.map((actividad) => ({ actividad })) : [{}]);
     const cronograma = contenido.cronograma?.length ? contenido.cronograma : cronogramaPlanBase();
     const editable = puedeEditarDocumentosProyecto();
+    const tituloPlan = plantilla ? `Plan de trabajo · ${plantilla.nombre}` : "Plan de trabajo general";
+    const descripcionPlan = plantilla ? `Organice las actividades de ${plantilla.nombre.toLowerCase()} para ${proyecto.nombre}.` : `Organice las actividades, responsables y fechas para ${proyecto.nombre}.`;
     contenedor.innerHTML = `
         <section class="documento-proyecto">
-            <div class="cabecera-documento-proyecto"><div><p class="etiqueta-documento">ESTUDIO MODULAR · EM360™</p><h3>Plan de trabajo</h3><p>Organice las actividades, responsables y fechas para ${escaparDocumentoProyecto(proyecto.nombre)}.</p></div><div class="acciones-documento"><button type="button" id="btnExportarPlan">Exportar PDF</button>${editable ? '<button type="button" id="btnGuardarPlan">Guardar plan</button>' : ''}</div></div>
+            <div class="cabecera-documento-proyecto"><div><p class="etiqueta-documento">ESTUDIO MODULAR · EM360™</p><h3>${escaparDocumentoProyecto(tituloPlan)}</h3><p>${escaparDocumentoProyecto(descripcionPlan)}</p></div><div class="acciones-documento"><button type="button" id="btnVolverPlantillasPlan" class="boton-secundario">Plantillas</button><button type="button" id="btnExportarPlan">Exportar PDF</button>${editable ? '<button type="button" id="btnGuardarPlan">Guardar plan</button>' : ''}</div></div>
             <div class="datos-documento-proyecto">
                 ${campoTextoDocumento("planProyecto", "Proyecto", proyecto.nombre, { readonly: true })}
+                ${campoTextoDocumento("planEspecialidad", "Especialidad", plantilla?.nombre || "General", { readonly: true })}
                 ${campoTextoDocumento("planCliente", "Cliente", contenido.cliente || proyecto.cliente)}
                 ${campoTextoDocumento("planResponsable", "Responsable", contenido.responsable || "")}
                 ${campoTextoDocumento("planInicioGeneral", "Inicio estimado", contenido.inicio || fechaHoyDocumento(), { tipo: "date" })}
                 ${campoTextoDocumento("planFinGeneral", "Finalización estimada", contenido.fin || "", { tipo: "date" })}
                 ${campoTextoDocumento("planUbicacion", "Ubicación", contenido.ubicacion || proyecto.ubicacion)}
             </div>
-            <section class="cronograma-especialidades">
+            ${plantilla ? `<section class="cronograma-especialidades"><div><h4>Etapas sugeridas para ${escaparDocumentoProyecto(plantilla.nombre)}</h4><p>La plantilla carga estas actividades como base. Edítelas según el alcance contratado.</p></div></section>` : `<section class="cronograma-especialidades">
                 <div><h4>Cronograma estimado por especialidad</h4><p>Edite los días de cada etapa según el alcance del proyecto.</p></div>
                 <div class="tabla-documento-scroll"><table class="tabla-documento-proyecto tabla-cronograma"><thead><tr><th>Etapa</th><th>Ebanistería<br><small>Días</small></th><th>Topes<br><small>Días</small></th><th>Sheetrock<br><small>Días</small></th></tr></thead><tbody id="filasCronogramaPlan">${cronograma.map(filaCronogramaPlan).join("")}</tbody></table></div>
-            </section>
+            </section>`}
             <label class="campo-ancho">Alcance del trabajo<textarea id="planAlcance" placeholder="Describa el alcance de los trabajos.">${escaparDocumentoProyecto(contenido.alcance)}</textarea></label>
             <div class="tabla-documento-scroll"><table class="tabla-documento-proyecto"><thead><tr><th>Actividad</th><th>Responsable</th><th>Inicio</th><th>Fin</th><th>Estado</th><th></th></tr></thead><tbody id="filasPlanTrabajo">${actividades.map(filaActividad).join("")}</tbody></table></div>
             ${editable ? '<button type="button" class="boton-secundario" id="btnAgregarActividad">+ Agregar actividad</button>' : ''}
@@ -200,6 +245,7 @@ function renderizarPlanTrabajo(contenedor, proyecto, documento) {
     document.getElementById("btnAgregarActividad")?.addEventListener("click", () => filas.insertAdjacentHTML("beforeend", filaActividad()));
     document.getElementById("btnGuardarPlan")?.addEventListener("click", guardarPlanTrabajo);
     document.getElementById("btnExportarPlan").addEventListener("click", exportarPlanTrabajo);
+    document.getElementById("btnVolverPlantillasPlan").addEventListener("click", mostrarPlanTrabajo);
 }
 
 function obtenerActividadesPlan() {
@@ -209,7 +255,9 @@ function obtenerActividadesPlan() {
 }
 
 function obtenerCronogramaPlan() {
-    return Array.from(document.querySelectorAll("#filasCronogramaPlan tr")).map((fila) => ({
+    const filas = document.querySelectorAll("#filasCronogramaPlan tr");
+    if (!filas.length) return [];
+    return Array.from(filas).map((fila) => ({
         etapa: fila.cells[0].textContent.trim(),
         ebanisteria: Number(fila.querySelector(".dias-ebanisteria").value) || 0,
         topes: Number(fila.querySelector(".dias-topes").value) || 0,
@@ -218,13 +266,14 @@ function obtenerCronogramaPlan() {
 }
 
 async function guardarPlanTrabajo() {
-    const contenido = { cliente: document.getElementById("planCliente").value.trim(), responsable: document.getElementById("planResponsable").value.trim(), inicio: document.getElementById("planInicioGeneral").value, fin: document.getElementById("planFinGeneral").value, ubicacion: document.getElementById("planUbicacion").value.trim(), alcance: document.getElementById("planAlcance").value.trim(), cronograma: obtenerCronogramaPlan(), actividades: obtenerActividadesPlan(), notas: document.getElementById("planNotas").value.trim() };
-    await guardarDocumentoProyecto(TIPO_PLAN_TRABAJO, "Plan de trabajo", contenido);
+    const contenido = { cliente: document.getElementById("planCliente").value.trim(), responsable: document.getElementById("planResponsable").value.trim(), inicio: document.getElementById("planInicioGeneral").value, fin: document.getElementById("planFinGeneral").value, ubicacion: document.getElementById("planUbicacion").value.trim(), alcance: document.getElementById("planAlcance").value.trim(), cronograma: obtenerCronogramaPlan(), actividades: obtenerActividadesPlan(), notas: document.getElementById("planNotas").value.trim(), especialidad: plantillaPlanTrabajoActual?.codigo || null };
+    const titulo = plantillaPlanTrabajoActual ? `Plan de trabajo · ${plantillaPlanTrabajoActual.nombre}` : "Plan de trabajo general";
+    await guardarDocumentoProyecto(tipoPlanTrabajoActual, titulo, contenido);
 }
 
 async function guardarDocumentoProyecto(tipo, titulo, contenido) {
     if (!puedeEditarDocumentosProyecto()) return alert("Solo Administrador u Oficial puede guardar este documento.");
-    const boton = tipo === TIPO_PLAN_TRABAJO ? document.getElementById("btnGuardarPlan") : document.getElementById("btnGuardarCotizacion");
+    const boton = tipo.startsWith(TIPO_PLAN_TRABAJO) ? document.getElementById("btnGuardarPlan") : document.getElementById("btnGuardarCotizacion");
     boton.disabled = true;
     try {
         const perfil = window.em360Permisos?.obtenerSesion?.();
@@ -248,7 +297,9 @@ function exportarCotizacionInterna() {
 function exportarPlanTrabajo() {
     const cronograma = obtenerCronogramaPlan().map((item) => `<tr><td>${escaparImpresion(item.etapa)}</td><td>${item.ebanisteria}</td><td>${item.topes}</td><td>${item.sheetrock}</td></tr>`).join("");
     const filas = obtenerActividadesPlan().map((item) => `<tr><td>${escaparImpresion(item.actividad)}</td><td>${escaparImpresion(item.responsable)}</td><td>${item.inicio || "—"}</td><td>${item.fin || "—"}</td><td>${item.estado}</td></tr>`).join("");
-    imprimirDocumento("Plan de trabajo", `<div class="meta"><b>Proyecto:</b> ${escaparImpresion(document.getElementById("planProyecto").value)}<br><b>Cliente:</b> ${escaparImpresion(document.getElementById("planCliente").value)}<br><b>Responsable:</b> ${escaparImpresion(document.getElementById("planResponsable").value)}<br><b>Inicio estimado:</b> ${escaparImpresion(document.getElementById("planInicioGeneral").value)}<br><b>Finalización estimada:</b> ${escaparImpresion(document.getElementById("planFinGeneral").value)}<br><b>Ubicación:</b> ${escaparImpresion(document.getElementById("planUbicacion").value)}</div><h4>Cronograma estimado por especialidad</h4><table><thead><tr><th>Etapa</th><th>Ebanistería · días</th><th>Topes · días</th><th>Sheetrock · días</th></tr></thead><tbody>${cronograma}</tbody></table><h4>Alcance</h4><p>${escaparImpresion(document.getElementById("planAlcance").value) || "Sin alcance indicado."}</p><table><thead><tr><th>Actividad</th><th>Responsable</th><th>Inicio</th><th>Fin</th><th>Estado</th></tr></thead><tbody>${filas}</tbody></table><h4>Notas generales</h4><p>${escaparImpresion(document.getElementById("planNotas").value) || "Sin notas adicionales."}</p>`);
+    const cronogramaHtml = cronograma ? `<h4>Cronograma estimado por especialidad</h4><table><thead><tr><th>Etapa</th><th>Ebanistería · días</th><th>Topes · días</th><th>Sheetrock · días</th></tr></thead><tbody>${cronograma}</tbody></table>` : "";
+    const titulo = plantillaPlanTrabajoActual ? `Plan de trabajo · ${plantillaPlanTrabajoActual.nombre}` : "Plan de trabajo general";
+    imprimirDocumento(titulo, `<div class="meta"><b>Proyecto:</b> ${escaparImpresion(document.getElementById("planProyecto").value)}<br><b>Especialidad:</b> ${escaparImpresion(document.getElementById("planEspecialidad").value)}<br><b>Cliente:</b> ${escaparImpresion(document.getElementById("planCliente").value)}<br><b>Responsable:</b> ${escaparImpresion(document.getElementById("planResponsable").value)}<br><b>Inicio estimado:</b> ${escaparImpresion(document.getElementById("planInicioGeneral").value)}<br><b>Finalización estimada:</b> ${escaparImpresion(document.getElementById("planFinGeneral").value)}<br><b>Ubicación:</b> ${escaparImpresion(document.getElementById("planUbicacion").value)}</div>${cronogramaHtml}<h4>Alcance</h4><p>${escaparImpresion(document.getElementById("planAlcance").value) || "Sin alcance indicado."}</p><table><thead><tr><th>Actividad</th><th>Responsable</th><th>Inicio</th><th>Fin</th><th>Estado</th></tr></thead><tbody>${filas}</tbody></table><h4>Notas generales</h4><p>${escaparImpresion(document.getElementById("planNotas").value) || "Sin notas adicionales."}</p>`);
 }
 
 function imprimirDocumento(titulo, cuerpo) {
