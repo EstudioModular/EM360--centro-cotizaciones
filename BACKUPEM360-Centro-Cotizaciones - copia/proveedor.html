@@ -25,6 +25,26 @@
                 <input id="claveProveedorAcceso" type="password" autocomplete="current-password" required>
                 <button type="submit">Ingresar</button>
                 <p id="mensajeProveedorAcceso" class="mensaje-proveedor" aria-live="polite"></p>
+                <button id="btnMostrarRegistroProveedor" class="boton-secundario" type="button">Crear cuenta</button>
+                <button id="btnRecuperarClaveProveedor" class="boton-secundario" type="button">Olvidé mi contraseña</button>
+            </form>
+        </section>
+
+        <section id="registroProveedor" class="tarjeta-proveedor" hidden>
+            <h1>Crear cuenta de proveedor</h1>
+            <p>Registre sus datos. Un administrador habilitará su acceso para cotizar.</p>
+            <form id="formRegistroProveedor" class="form-proveedor">
+                <label for="nombreRegistroProveedor">Nombre</label>
+                <input id="nombreRegistroProveedor" type="text" autocomplete="name" required>
+                <label for="correoRegistroProveedor">Correo electrónico</label>
+                <input id="correoRegistroProveedor" type="email" autocomplete="email" required>
+                <label for="claveRegistroProveedor">Contraseña</label>
+                <input id="claveRegistroProveedor" type="password" autocomplete="new-password" minlength="6" required>
+                <label for="confirmarClaveRegistroProveedor">Confirme la contraseña</label>
+                <input id="confirmarClaveRegistroProveedor" type="password" autocomplete="new-password" minlength="6" required>
+                <button type="submit">Crear cuenta</button>
+                <button id="btnVolverAccesoProveedor" class="boton-secundario" type="button">Volver a ingresar</button>
+                <p id="mensajeRegistroProveedor" class="mensaje-proveedor" aria-live="polite"></p>
             </form>
         </section>
 

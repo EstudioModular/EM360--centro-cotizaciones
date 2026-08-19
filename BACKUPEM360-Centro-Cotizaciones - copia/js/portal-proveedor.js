@@ -60,14 +60,34 @@ async function cargarProyectosPortalProveedor() {
     ].join("");
 }
 
+function mostrarRegistroProveedor() {
+    document.getElementById("accesoProveedor").hidden = true;
+    document.getElementById("establecerClaveProveedor").hidden = true;
+    document.getElementById("panelProveedor").hidden = true;
+    document.getElementById("registroProveedor").hidden = false;
+}
+
+function mostrarAccesoProveedor() {
+    document.getElementById("registroProveedor").hidden = true;
+    document.getElementById("establecerClaveProveedor").hidden = true;
+    document.getElementById("panelProveedor").hidden = true;
+    document.getElementById("accesoProveedor").hidden = false;
+}
+
+function urlPortalProveedor() {
+    return `${window.location.origin}/proveedor.html`;
+}
+
 async function mostrarFormularioClaveProveedor() {
     const acceso = document.getElementById("accesoProveedor");
+    const registro = document.getElementById("registroProveedor");
     const formularioClave = document.getElementById("establecerClaveProveedor");
     const panel = document.getElementById("panelProveedor");
     const mensaje = document.getElementById("mensajeEstablecerClaveProveedor");
     const { data: sesionData } = await supabaseClient.auth.getSession();
 
     acceso.hidden = true;
+    registro.hidden = true;
     panel.hidden = true;
 
     if (!sesionData.session?.user) {
@@ -87,6 +107,7 @@ async function mostrarPortalProveedor() {
     }
 
     const acceso = document.getElementById("accesoProveedor");
+    const registro = document.getElementById("registroProveedor");
     const formularioClave = document.getElementById("establecerClaveProveedor");
     const panel = document.getElementById("panelProveedor");
     const mensajeAcceso = document.getElementById("mensajeProveedorAcceso");
@@ -97,6 +118,7 @@ async function mostrarPortalProveedor() {
         usuarioPortalProveedor = null;
         especialidadPortalProveedor = null;
         acceso.hidden = false;
+        registro.hidden = true;
         panel.hidden = true;
         formularioClave.hidden = true;
         return;
@@ -122,6 +144,7 @@ async function mostrarPortalProveedor() {
     usuarioPortalProveedor = usuario;
     especialidadPortalProveedor = perfil.especialidad_proveedor;
     acceso.hidden = true;
+    registro.hidden = true;
     formularioClave.hidden = true;
     panel.hidden = false;
     document.getElementById("nombreProveedorSesion").textContent = `¡Hola, ${nombreVisibleProveedor(perfil.nombre, usuario.email)}!`;
@@ -155,6 +178,59 @@ document.getElementById("formAccesoProveedor").addEventListener("submit", async 
     }
 
     await mostrarPortalProveedor();
+});
+
+document.getElementById("btnMostrarRegistroProveedor").addEventListener("click", mostrarRegistroProveedor);
+document.getElementById("btnVolverAccesoProveedor").addEventListener("click", mostrarAccesoProveedor);
+
+document.getElementById("btnRecuperarClaveProveedor").addEventListener("click", async () => {
+    const correo = document.getElementById("correoProveedorAcceso").value.trim();
+    const mensaje = document.getElementById("mensajeProveedorAcceso");
+    if (!correo) {
+        mostrarMensajeProveedor(mensaje, "Escriba su correo primero para enviarle el enlace de contraseña.", true);
+        return;
+    }
+
+    mostrarMensajeProveedor(mensaje, "Enviando enlace de contraseña...");
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(correo, { redirectTo: urlPortalProveedor() });
+    if (error) {
+        mostrarMensajeProveedor(mensaje, error.message, true);
+        return;
+    }
+    mostrarMensajeProveedor(mensaje, "Revise su correo y abra el enlace para crear una contraseña.");
+});
+
+document.getElementById("formRegistroProveedor").addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    const mensaje = document.getElementById("mensajeRegistroProveedor");
+    const nombre = document.getElementById("nombreRegistroProveedor").value.trim();
+    const correo = document.getElementById("correoRegistroProveedor").value.trim();
+    const clave = document.getElementById("claveRegistroProveedor").value;
+    const confirmacion = document.getElementById("confirmarClaveRegistroProveedor").value;
+
+    if (clave.length < 6) {
+        mostrarMensajeProveedor(mensaje, "La contraseña debe tener al menos 6 caracteres.", true);
+        return;
+    }
+    if (clave !== confirmacion) {
+        mostrarMensajeProveedor(mensaje, "Las contraseñas no coinciden.", true);
+        return;
+    }
+
+    mostrarMensajeProveedor(mensaje, "Creando cuenta...");
+    const { error } = await supabaseClient.auth.signUp({
+        email: correo,
+        password: clave,
+        options: {
+            data: { nombre },
+            emailRedirectTo: urlPortalProveedor()
+        }
+    });
+    if (error) {
+        mostrarMensajeProveedor(mensaje, error.message, true);
+        return;
+    }
+    mostrarMensajeProveedor(mensaje, "Revise su correo para confirmar la cuenta. Luego un administrador podrá habilitarlo para cotizar.");
 });
 
 document.getElementById("formEstablecerClaveProveedor").addEventListener("submit", async (evento) => {
