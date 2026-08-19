@@ -230,7 +230,13 @@ document.getElementById("formRegistroProveedor").addEventListener("submit", asyn
         mostrarMensajeProveedor(mensaje, error.message, true);
         return;
     }
-    mostrarMensajeProveedor(mensaje, "Revise su correo para confirmar la cuenta. Luego un administrador podrá habilitarlo para cotizar.");
+    await supabaseClient.auth.signOut();
+    document.getElementById("formRegistroProveedor").reset();
+    mostrarAccesoProveedor();
+    mostrarMensajeProveedor(
+        document.getElementById("mensajeProveedorAcceso"),
+        "Cuenta creada. Ingrese con su correo y contraseña; un administrador deberá habilitarla para cotizar."
+    );
 });
 
 document.getElementById("formEstablecerClaveProveedor").addEventListener("submit", async (evento) => {
