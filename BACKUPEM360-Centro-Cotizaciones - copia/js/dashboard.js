@@ -157,9 +157,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p>Abra <strong>Authentication → Users → Add user → Send invitation</strong> para invitar a un correo. Los nuevos usuarios empiezan con rol Consulta; el rol se administra desde la tabla Perfiles.</p>
                 <hr>
                 <h3>Activar portal de proveedor</h3>
-                <p>Después de invitar al proveedor, escriba su correo para darle acceso exclusivo al portal de cotizaciones.</p>
+                <p>Seleccione al proveedor por nombre para darle acceso exclusivo al portal de cotizaciones. No se mostrará ni se solicitará su correo.</p>
                 <form id="formActivarProveedor" class="form-panel">
-                    <input id="correoActivarProveedor" type="email" maxlength="160" placeholder="correo@proveedor.com" required>
+                    <input id="buscarProveedorActivar" type="search" maxlength="120" placeholder="Buscar proveedor por nombre">
+                    <select id="proveedorActivarProveedor" required><option value="">Cargando cuentas...</option></select>
                     <select id="especialidadActivarProveedor" required>
                         <option value="">Seleccione la especialidad</option>
                         <option value="ebanisteria">Ebanista</option>
@@ -177,17 +178,45 @@ document.addEventListener("DOMContentLoaded", () => {
             </section>
         `;
 
+        const selectorProveedor = document.getElementById("proveedorActivarProveedor");
+        const buscadorProveedor = document.getElementById("buscarProveedorActivar");
+        let cuentasConsulta = [];
+
+        function actualizarOpcionesProveedor() {
+            const texto = buscadorProveedor.value.trim().toLocaleLowerCase();
+            const disponibles = cuentasConsulta.filter((cuenta) => cuenta.nombre.toLocaleLowerCase().includes(texto));
+            selectorProveedor.innerHTML = `<option value="">Seleccione un proveedor</option>${disponibles.map((cuenta) => `<option value="${cuenta.id}">${escaparDashboard(cuenta.nombre)}${cuenta.es_proveedor_portal ? ` · ${escaparDashboard(cuenta.especialidad_proveedor || "Proveedor")}` : " · Pendiente de activar"}</option>`).join("")}`;
+        }
+
+        async function cargarCuentasConsulta() {
+            const { data, error } = await supabaseClient
+                .from("Perfiles")
+                .select("id, nombre, rol, es_proveedor_portal, especialidad_proveedor")
+                .eq("rol", "Consulta")
+                .order("nombre", { ascending: true });
+            if (error) {
+                selectorProveedor.innerHTML = '<option value="">No se pudieron cargar las cuentas</option>';
+                return;
+            }
+            cuentasConsulta = (data || []).filter((cuenta) => cuenta.nombre);
+            actualizarOpcionesProveedor();
+        }
+
+        buscadorProveedor.addEventListener("input", actualizarOpcionesProveedor);
+        cargarCuentasConsulta();
+
         document.getElementById("formActivarProveedor").addEventListener("submit", async (evento) => {
             evento.preventDefault();
             const mensaje = document.getElementById("mensajeActivarProveedor");
             mensaje.textContent = "Activando...";
-            const { error } = await supabaseClient.rpc("configurar_proveedor", {
-                correo_proveedor: document.getElementById("correoActivarProveedor").value.trim(),
+            const { error } = await supabaseClient.rpc("configurar_proveedor_por_id", {
+                proveedor_id: selectorProveedor.value,
                 especialidad: document.getElementById("especialidadActivarProveedor").value
             });
             mensaje.textContent = error
                 ? `No se pudo activar: ${error.message}`
                 : "Proveedor activado. Ya puede entrar al portal de proveedores.";
+            if (!error) cargarCuentasConsulta();
         });
         return;
 
