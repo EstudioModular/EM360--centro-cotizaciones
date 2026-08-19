@@ -4,7 +4,7 @@ window.em360EnlaceDeClave = (() => {
     const tipos = ["invite", "magiclink", "recovery"];
     const hash = new URLSearchParams(window.location.hash.substring(1));
     const consulta = new URLSearchParams(window.location.search);
-    return tipos.includes(hash.get("type")) || tipos.includes(consulta.get("type"));
+    return tipos.includes(hash.get("type")) || tipos.includes(consulta.get("type")) || consulta.has("code");
 })();
 
 const supabaseClient = window.supabase.createClient(

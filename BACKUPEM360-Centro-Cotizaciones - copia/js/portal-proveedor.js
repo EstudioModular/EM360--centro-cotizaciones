@@ -60,8 +60,34 @@ async function cargarProyectosPortalProveedor() {
     ].join("");
 }
 
-async function mostrarPortalProveedor() {
+async function mostrarFormularioClaveProveedor() {
     const acceso = document.getElementById("accesoProveedor");
+    const formularioClave = document.getElementById("establecerClaveProveedor");
+    const panel = document.getElementById("panelProveedor");
+    const mensaje = document.getElementById("mensajeEstablecerClaveProveedor");
+    const { data: sesionData } = await supabaseClient.auth.getSession();
+
+    acceso.hidden = true;
+    panel.hidden = true;
+
+    if (!sesionData.session?.user) {
+        formularioClave.hidden = false;
+        mostrarMensajeProveedor(mensaje, "El enlace no es válido o ya venció. Solicite uno nuevo al administrador.", true);
+        return;
+    }
+
+    formularioClave.hidden = false;
+    mostrarMensajeProveedor(mensaje, "Cree una contraseña de al menos 6 caracteres.");
+}
+
+async function mostrarPortalProveedor() {
+    if (window.em360EnlaceDeClave) {
+        await mostrarFormularioClaveProveedor();
+        return;
+    }
+
+    const acceso = document.getElementById("accesoProveedor");
+    const formularioClave = document.getElementById("establecerClaveProveedor");
     const panel = document.getElementById("panelProveedor");
     const mensajeAcceso = document.getElementById("mensajeProveedorAcceso");
     const { data: sesionData } = await supabaseClient.auth.getSession();
@@ -72,6 +98,7 @@ async function mostrarPortalProveedor() {
         especialidadPortalProveedor = null;
         acceso.hidden = false;
         panel.hidden = true;
+        formularioClave.hidden = true;
         return;
     }
 
@@ -95,6 +122,7 @@ async function mostrarPortalProveedor() {
     usuarioPortalProveedor = usuario;
     especialidadPortalProveedor = perfil.especialidad_proveedor;
     acceso.hidden = true;
+    formularioClave.hidden = true;
     panel.hidden = false;
     document.getElementById("nombreProveedorSesion").textContent = `¡Hola, ${nombreVisibleProveedor(perfil.nombre, usuario.email)}!`;
 
@@ -126,6 +154,33 @@ document.getElementById("formAccesoProveedor").addEventListener("submit", async 
         return;
     }
 
+    await mostrarPortalProveedor();
+});
+
+document.getElementById("formEstablecerClaveProveedor").addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    const mensaje = document.getElementById("mensajeEstablecerClaveProveedor");
+    const clave = document.getElementById("nuevaClaveProveedor").value;
+    const confirmacion = document.getElementById("confirmarClaveProveedor").value;
+
+    if (clave.length < 6) {
+        mostrarMensajeProveedor(mensaje, "La contraseña debe tener al menos 6 caracteres.", true);
+        return;
+    }
+    if (clave !== confirmacion) {
+        mostrarMensajeProveedor(mensaje, "Las contraseñas no coinciden.", true);
+        return;
+    }
+
+    mostrarMensajeProveedor(mensaje, "Guardando contraseña...");
+    const { error } = await supabaseClient.auth.updateUser({ password: clave });
+    if (error) {
+        mostrarMensajeProveedor(mensaje, error.message, true);
+        return;
+    }
+
+    window.history.replaceState({}, document.title, window.location.pathname);
+    window.em360EnlaceDeClave = false;
     await mostrarPortalProveedor();
 });
 
