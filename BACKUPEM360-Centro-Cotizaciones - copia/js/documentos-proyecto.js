@@ -14,6 +14,14 @@ const PLANTILLAS_PLAN_TRABAJO = {
 };
 let tipoPlanTrabajoActual = TIPO_PLAN_TRABAJO;
 let plantillaPlanTrabajoActual = null;
+const DETALLES_POR_ESPECIALIDAD = {
+    ebanisteria: { titulo: "Especificaciones de ebanistería", campos: [["areas", "Elementos y áreas", "Ej.: Gabinetes, puertas, closet y marcos."], ["materiales", "Madera, tableros y herrajes", "Ej.: MDF RH, melamina, bisagras y correderas."], ["acabado", "Color y acabado", "Ej.: Roble claro mate, pintura o laca."], ["medidas", "Medidas y detalles críticos", "Incluya espesores, aperturas y tolerancias."], ["calidad", "Control de calidad", "Alineación, nivelación, herrajes y acabado uniforme."]] },
+    marmoleros: { titulo: "Especificaciones de mármol y topes", campos: [["areas", "Elementos y áreas", "Ej.: Tope de cocina, isla, backsplash y baños."], ["material", "Piedra, color y acabado", "Ej.: Cuarzo blanco, granito o mármol pulido."], ["medidas", "Espesor, cantos y perforaciones", "Indique espesor, tipo de canto, fregadero y grifería."], ["instalacion", "Juntas, sellado e instalación", "Defina uniones, siliconado y soportes."], ["calidad", "Control de calidad", "Nivelación, vetas, cortes limpios y sellado."]] },
+    sheetrockeros: { titulo: "Especificaciones de sheetrock", campos: [["areas", "Muros, plafones y áreas", "Ej.: Plafón de sala, divisiones y cajillos."], ["sistema", "Estructura y sistema", "Ej.: Canales, parales, calibre y separación."], ["paneles", "Paneles y aislamiento", "Indique tipo, espesor, resistencia a humedad y aislante."], ["terminacion", "Juntas y terminación", "Encintado, masilla, lijado y nivel de acabado."], ["calidad", "Control de calidad", "Plomos, niveles, juntas invisibles y preparación para pintura."]] },
+    plomeros: { titulo: "Especificaciones de plomería", campos: [["areas", "Puntos y áreas de trabajo", "Ej.: Cocina, baños, lavandería y calentador."], ["materiales", "Tuberías y materiales", "Ej.: PPR, PVC, CPVC, válvulas y accesorios."], ["aparatos", "Aparatos y griferías", "Indique lavamanos, inodoros, fregadero y mezcladoras."], ["pruebas", "Pruebas requeridas", "Presión, desagüe, fugas y funcionamiento."], ["calidad", "Control de calidad", "Pendientes, sellos, accesos y pruebas aprobadas."]] },
+    electricistas: { titulo: "Especificaciones de electricidad", campos: [["areas", "Circuitos y áreas", "Ej.: Cocina, habitaciones, iluminación exterior y A/C."], ["materiales", "Canalizaciones, cables y protecciones", "Indique calibre, tubería, breakers y tablero."], ["equipos", "Luminarias, tomas y equipos", "Detalle interruptores, tomas, luminarias y cargas especiales."], ["pruebas", "Pruebas y seguridad", "Continuidad, polaridad, tierra y protecciones."], ["calidad", "Control de calidad", "Etiquetado, funcionamiento y cumplimiento de seguridad."]] },
+    piseros: { titulo: "Especificaciones de pisos", campos: [["areas", "Áreas a revestir", "Ej.: Sala, cocina, baños, terraza y zócalos."], ["material", "Piso, formato y acabado", "Ej.: Porcelanato 60x60, cerámica o revestimiento."], ["base", "Base y nivelación", "Estado de contrapiso, pendiente y correcciones."], ["juntas", "Modulación, cortes y juntas", "Dirección de piezas, fragua, perfiles y remates."], ["calidad", "Control de calidad", "Nivel, alineación, juntas uniformes y piezas sin huecos."]] }
+};
 
 function escaparDocumentoProyecto(valor) {
     const elemento = document.createElement("div");
@@ -124,6 +132,31 @@ function plantillaDetallesPintura(contenido = {}) {
 function obtenerDetallesPintura() {
     const valor = (id) => document.getElementById(id)?.value.trim() || "";
     return { areas: valor("pinturaAreas"), superficie: valor("pinturaSuperficie"), color: valor("pinturaColor"), capas: Number(document.getElementById("pinturaCapas")?.value) || 0, herramientas: valor("pinturaHerramientas"), materiales: valor("pinturaMateriales"), calidad: valor("pinturaCalidad") };
+}
+
+function plantillaDetallesEspecialidad(plantilla, contenido = {}) {
+    if (plantilla?.codigo === "pintores") return plantillaDetallesPintura(contenido);
+    const configuracion = DETALLES_POR_ESPECIALIDAD[plantilla?.codigo];
+    if (!configuracion) return "";
+    const detalles = contenido.detalles_especialidad || {};
+    const campos = configuracion.campos.map(([id, etiqueta, placeholder]) => `<label>${etiqueta}<textarea id="detalleEspecialidad_${id}" placeholder="${escaparDocumentoProyecto(placeholder)}">${escaparDocumentoProyecto(detalles[id])}</textarea></label>`).join("");
+    return `<section class="cronograma-especialidades"><div><h4>${escaparDocumentoProyecto(configuracion.titulo)}</h4><p>Complete estos datos para coordinar, ejecutar y revisar esta especialidad.</p></div><div class="datos-documento-proyecto">${campos}</div></section>`;
+}
+
+function obtenerDetallesEspecialidad(plantilla) {
+    if (!plantilla) return null;
+    if (plantilla.codigo === "pintores") return obtenerDetallesPintura();
+    const configuracion = DETALLES_POR_ESPECIALIDAD[plantilla.codigo];
+    if (!configuracion) return null;
+    return Object.fromEntries(configuracion.campos.map(([id]) => [id, document.getElementById(`detalleEspecialidad_${id}`)?.value.trim() || ""]));
+}
+
+function resumenDetallesEspecialidad(plantilla) {
+    if (!plantilla || plantilla.codigo === "pintores") return "";
+    const configuracion = DETALLES_POR_ESPECIALIDAD[plantilla.codigo];
+    const detalles = obtenerDetallesEspecialidad(plantilla);
+    if (!configuracion || !detalles) return "";
+    return `<h4>${escaparImpresion(configuracion.titulo)}</h4><div class="meta">${configuracion.campos.map(([id, etiqueta]) => `<b>${escaparImpresion(etiqueta)}:</b> ${escaparImpresion(detalles[id]) || "—"}`).join("<br>")}</div>`;
 }
 
 function renderizarSelectorPlanTrabajo(contenedor, proyecto) {
@@ -244,7 +277,7 @@ function renderizarPlanTrabajo(contenedor, proyecto, documento, plantilla = null
                 <div><h4>Cronograma estimado por especialidad</h4><p>Edite los días de cada etapa según el alcance del proyecto.</p></div>
                 <div class="tabla-documento-scroll"><table class="tabla-documento-proyecto tabla-cronograma"><thead><tr><th>Etapa</th><th>Ebanistería<br><small>Días</small></th><th>Topes<br><small>Días</small></th><th>Sheetrock<br><small>Días</small></th></tr></thead><tbody id="filasCronogramaPlan">${cronograma.map(filaCronogramaPlan).join("")}</tbody></table></div>
             </section>`}
-            ${esPintura ? plantillaDetallesPintura(contenido) : ""}
+            ${plantilla ? plantillaDetallesEspecialidad(plantilla, contenido) : ""}
             <label class="campo-ancho">Alcance del trabajo<textarea id="planAlcance" placeholder="Describa el alcance de los trabajos.">${escaparDocumentoProyecto(contenido.alcance)}</textarea></label>
             <div class="tabla-documento-scroll"><table class="tabla-documento-proyecto"><thead><tr><th>Actividad</th><th>Responsable</th><th>Inicio</th><th>Fin</th><th>Estado</th><th></th></tr></thead><tbody id="filasPlanTrabajo">${actividades.map(filaActividad).join("")}</tbody></table></div>
             ${editable ? '<button type="button" class="boton-secundario" id="btnAgregarActividad">+ Agregar actividad</button>' : ''}
@@ -278,7 +311,7 @@ function obtenerCronogramaPlan() {
 }
 
 async function guardarPlanTrabajo() {
-    const contenido = { cliente: document.getElementById("planCliente").value.trim(), responsable: document.getElementById("planResponsable").value.trim(), inicio: document.getElementById("planInicioGeneral").value, fin: document.getElementById("planFinGeneral").value, ubicacion: document.getElementById("planUbicacion").value.trim(), alcance: document.getElementById("planAlcance").value.trim(), cronograma: obtenerCronogramaPlan(), actividades: obtenerActividadesPlan(), notas: document.getElementById("planNotas").value.trim(), especialidad: plantillaPlanTrabajoActual?.codigo || null, pintura: plantillaPlanTrabajoActual?.codigo === "pintores" ? obtenerDetallesPintura() : null };
+    const contenido = { cliente: document.getElementById("planCliente").value.trim(), responsable: document.getElementById("planResponsable").value.trim(), inicio: document.getElementById("planInicioGeneral").value, fin: document.getElementById("planFinGeneral").value, ubicacion: document.getElementById("planUbicacion").value.trim(), alcance: document.getElementById("planAlcance").value.trim(), cronograma: obtenerCronogramaPlan(), actividades: obtenerActividadesPlan(), notas: document.getElementById("planNotas").value.trim(), especialidad: plantillaPlanTrabajoActual?.codigo || null, pintura: plantillaPlanTrabajoActual?.codigo === "pintores" ? obtenerDetallesPintura() : null, detalles_especialidad: plantillaPlanTrabajoActual?.codigo && plantillaPlanTrabajoActual.codigo !== "pintores" ? obtenerDetallesEspecialidad(plantillaPlanTrabajoActual) : null };
     const titulo = plantillaPlanTrabajoActual ? `Plan de trabajo · ${plantillaPlanTrabajoActual.nombre}` : "Plan de trabajo general";
     await guardarDocumentoProyecto(tipoPlanTrabajoActual, titulo, contenido);
 }
@@ -313,7 +346,8 @@ function exportarPlanTrabajo() {
     const titulo = plantillaPlanTrabajoActual ? `Plan de trabajo · ${plantillaPlanTrabajoActual.nombre}` : "Plan de trabajo general";
     const pintura = plantillaPlanTrabajoActual?.codigo === "pintores" ? obtenerDetallesPintura() : null;
     const pinturaHtml = pintura ? `<h4>Especificaciones de pintura</h4><div class="meta"><b>Áreas:</b> ${escaparImpresion(pintura.areas) || "—"}<br><b>Superficie:</b> ${escaparImpresion(pintura.superficie) || "—"}<br><b>Color y acabado:</b> ${escaparImpresion(pintura.color) || "—"}<br><b>Manos:</b> ${pintura.capas || "—"}<br><b>Herramientas:</b> ${escaparImpresion(pintura.herramientas) || "—"}<br><b>Materiales:</b> ${escaparImpresion(pintura.materiales) || "—"}<br><b>Control de calidad:</b> ${escaparImpresion(pintura.calidad) || "—"}</div>` : "";
-    imprimirDocumento(titulo, `<div class="meta"><b>Proyecto:</b> ${escaparImpresion(document.getElementById("planProyecto").value)}<br><b>Especialidad:</b> ${escaparImpresion(document.getElementById("planEspecialidad").value)}<br><b>Cliente:</b> ${escaparImpresion(document.getElementById("planCliente").value)}<br><b>Responsable:</b> ${escaparImpresion(document.getElementById("planResponsable").value)}<br><b>Inicio estimado:</b> ${escaparImpresion(document.getElementById("planInicioGeneral").value)}<br><b>Finalización estimada:</b> ${escaparImpresion(document.getElementById("planFinGeneral").value)}<br><b>Ubicación:</b> ${escaparImpresion(document.getElementById("planUbicacion").value)}</div>${pinturaHtml}${cronogramaHtml}<h4>Alcance</h4><p>${escaparImpresion(document.getElementById("planAlcance").value) || "Sin alcance indicado."}</p><table><thead><tr><th>Actividad</th><th>Responsable</th><th>Inicio</th><th>Fin</th><th>Estado</th></tr></thead><tbody>${filas}</tbody></table><h4>Notas generales</h4><p>${escaparImpresion(document.getElementById("planNotas").value) || "Sin notas adicionales."}</p>`);
+    const detallesHtml = pinturaHtml || resumenDetallesEspecialidad(plantillaPlanTrabajoActual);
+    imprimirDocumento(titulo, `<div class="meta"><b>Proyecto:</b> ${escaparImpresion(document.getElementById("planProyecto").value)}<br><b>Especialidad:</b> ${escaparImpresion(document.getElementById("planEspecialidad").value)}<br><b>Cliente:</b> ${escaparImpresion(document.getElementById("planCliente").value)}<br><b>Responsable:</b> ${escaparImpresion(document.getElementById("planResponsable").value)}<br><b>Inicio estimado:</b> ${escaparImpresion(document.getElementById("planInicioGeneral").value)}<br><b>Finalización estimada:</b> ${escaparImpresion(document.getElementById("planFinGeneral").value)}<br><b>Ubicación:</b> ${escaparImpresion(document.getElementById("planUbicacion").value)}</div>${detallesHtml}${cronogramaHtml}<h4>Alcance</h4><p>${escaparImpresion(document.getElementById("planAlcance").value) || "Sin alcance indicado."}</p><table><thead><tr><th>Actividad</th><th>Responsable</th><th>Inicio</th><th>Fin</th><th>Estado</th></tr></thead><tbody>${filas}</tbody></table><h4>Notas generales</h4><p>${escaparImpresion(document.getElementById("planNotas").value) || "Sin notas adicionales."}</p>`);
 }
 
 function imprimirDocumento(titulo, cuerpo) {
