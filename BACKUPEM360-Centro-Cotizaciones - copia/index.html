@@ -28,12 +28,13 @@
         <label for="claveAcceso">Contraseña</label>
         <input id="claveAcceso" type="password" autocomplete="current-password" required>
         <button type="submit">Iniciar sesión</button>
+        <button id="btnRecuperarClave" type="button">Olvidé mi contraseña</button>
         <p id="mensajeAcceso" class="mensaje-acceso" aria-live="polite"></p>
     </form>
 
     <form id="formClaveInvitacion" class="tarjeta-acceso" hidden>
-        <h1>Crear contraseña</h1>
-        <p>Complete la invitación creando una contraseña segura.</p>
+        <h1>Crear o cambiar contraseña</h1>
+        <p>Defina una contraseña nueva para su cuenta.</p>
         <label for="nuevaClaveAcceso">Nueva contraseña</label>
         <input id="nuevaClaveAcceso" type="password" minlength="8" autocomplete="new-password" required>
         <button type="submit">Activar cuenta</button>

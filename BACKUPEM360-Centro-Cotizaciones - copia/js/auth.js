@@ -63,6 +63,32 @@ document.getElementById("formInicioSesion").addEventListener("submit", async (ev
     await actualizarVistaAcceso();
 });
 
+document.getElementById("btnRecuperarClave").addEventListener("click", async () => {
+    const correo = document.getElementById("correoAcceso");
+    const mensaje = document.getElementById("mensajeAcceso");
+    correo.value = correo.value.trim();
+
+    if (!correo.value || !correo.checkValidity()) {
+        mensaje.textContent = "Escriba un correo electrónico válido para enviarle el enlace.";
+        correo.focus();
+        return;
+    }
+
+    const boton = document.getElementById("btnRecuperarClave");
+    boton.disabled = true;
+    mensaje.textContent = "Enviando enlace de recuperación...";
+
+    try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(correo.value);
+        if (error) throw error;
+        mensaje.textContent = "Revise su correo para restablecer la contraseña.";
+    } catch (error) {
+        mensaje.textContent = error.message;
+    } finally {
+        boton.disabled = false;
+    }
+});
+
 document.getElementById("formClaveInvitacion").addEventListener("submit", async (evento) => {
     evento.preventDefault();
     const mensaje = document.getElementById("mensajeInvitacion");
